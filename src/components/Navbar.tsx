@@ -17,7 +17,7 @@ export function Navbar() {
             <a href="#consultation" className="text-muted-foreground hover:text-primary transition-colors">
               Book a consultation
             </a>
-            <a href="#about" className="text-muted-foreground hover:text-primary transition-colors">
+            <a href="/about" className="text-muted-foreground hover:text-primary transition-colors">
               About
             </a>
           </div>
