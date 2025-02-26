@@ -31,7 +31,7 @@ const teamMembers = [
   {
     name: "Gabriella Eberhardt",
     expertise: "HR & People Capital",
-    photo: "https://images.unsplash.com/photo-1580489944761-15a19d654956",
+    photo: "/lovable-uploads/2ec2751a-9550-4392-afd6-42afbaf57d52.png",
     initials: "GE",
     bio: "Gabriella Eberhardt is a seasoned HR professional specializing in people capital management. Her expertise lies in developing effective HR strategies, cultural transformation, and implementing people-centric initiatives that drive organizational success."
   },
