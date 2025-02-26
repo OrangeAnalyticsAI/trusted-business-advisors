@@ -2,14 +2,29 @@
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function Navbar() {
-  const handleAuthClick = () => {
-    toast("Coming Soon", {
-      description: "Jen hasn't built this yet",
-      position: "top-center",
+  const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Check initial auth state
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
     });
-  };
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const handleConsultationClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -17,6 +32,17 @@ export function Navbar() {
       description: "Jen hasn't built this yet",
       position: "top-center",
     });
+  };
+
+  const handleAuthClick = () => {
+    if (isAuthenticated) {
+      supabase.auth.signOut().then(() => {
+        toast.success("Logged out successfully");
+        navigate("/");
+      });
+    } else {
+      navigate("/auth");
+    }
   };
 
   return (
@@ -44,7 +70,9 @@ export function Navbar() {
         </div>
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          <Button onClick={handleAuthClick} className="text-base">Sign In</Button>
+          <Button onClick={handleAuthClick} className="text-base">
+            {isAuthenticated ? "Sign Out" : "Sign In"}
+          </Button>
         </div>
       </div>
     </nav>
