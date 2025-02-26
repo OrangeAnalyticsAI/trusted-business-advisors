@@ -11,7 +11,7 @@ export function Navbar() {
             <a href="/content" className="text-muted-foreground hover:text-primary transition-colors">
               Content
             </a>
-            <a href="#pricing" className="text-muted-foreground hover:text-primary transition-colors">
+            <a href="/pricing" className="text-muted-foreground hover:text-primary transition-colors">
               Pricing
             </a>
             <a href="#consultation" className="text-muted-foreground hover:text-primary transition-colors">
