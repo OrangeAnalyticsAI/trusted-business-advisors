@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthForm } from "@/components/AuthForm";
@@ -19,10 +18,9 @@ export default function Auth() {
       if (token && type === "signup") {
         setVerifying(true);
         try {
-          // We need to pass the full token, not token_hash
           const { error } = await supabase.auth.verifyOtp({
-            token,
             type: "signup",
+            token_hash: token,
           });
           
           if (error) {
