@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { ArrowRight, FileText, Video, Table, Lock } from "lucide-react";
@@ -17,20 +16,20 @@ export default function Index() {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-24 relative overflow-hidden">
+      <section className="pt-24 sm:pt-32 pb-16 sm:pb-24 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary via-primary/20 to-background z-0"></div>
         <div className="absolute inset-0 bg-[linear-gradient(225deg,_#FFE29F_0%,_#FFA99F_48%,_#FF719A_100%)] opacity-20 dark:opacity-10 z-0"></div>
         <div className="absolute inset-0 backdrop-blur-[120px] z-0"></div>
         <div className="container relative z-10">
-          <div className="text-center space-y-6 max-w-3xl mx-auto animate-in">
+          <div className="text-center space-y-4 sm:space-y-6 max-w-3xl mx-auto animate-in mt-16 sm:mt-0">
             <div className="relative inline-block">
-              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
                 Expert Business Insights,
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80"> On Demand</span>
               </h1>
               <div className="absolute -inset-x-6 -inset-y-4 bg-gradient-to-r from-primary/20 to-primary/0 blur-2xl -z-10 animate-pulse"></div>
             </div>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-lg sm:text-xl text-muted-foreground px-4 sm:px-0">
               Access premium business content from industry experts. Transform your business with actionable insights and professional guidance.
             </p>
             <div className="flex justify-center gap-4">
@@ -46,7 +45,7 @@ export default function Index() {
       </section>
 
       {/* Content Types Section */}
-      <section className="py-24 bg-muted">
+      <section className="py-16 sm:py-24 bg-muted">
         <div className="container">
           <h2 className="text-3xl font-bold text-center mb-12">Premium Business Content</h2>
           <div className="grid md:grid-cols-3 gap-8">
@@ -80,7 +79,7 @@ export default function Index() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 container">
+      <section className="py-16 sm:py-24 container">
         <div className="glass rounded-2xl p-12 text-center max-w-4xl mx-auto">
           <Lock className="h-12 w-12 mx-auto text-primary mb-6" />
           <h2 className="text-3xl font-bold mb-4">Ready to Access Premium Content?</h2>
