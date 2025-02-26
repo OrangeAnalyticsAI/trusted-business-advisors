@@ -17,7 +17,7 @@ const teamMembers = [
   {
     name: "Mark Akinlade",
     expertise: "Legal Services",
-    photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+    photo: "/lovable-uploads/2bf12ddb-a199-4417-a656-5ec88cd09df3.png",
     initials: "MA",
     bio: "Mark Akinlade is an experienced legal professional providing comprehensive legal services to businesses. His expertise covers corporate law, compliance, and regulatory matters, ensuring businesses navigate legal complexities effectively."
   },
