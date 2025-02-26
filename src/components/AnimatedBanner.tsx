@@ -1,11 +1,11 @@
 
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Sphere, Line } from '@react-three/drei';
 import * as THREE from 'three';
 
 const AnimatedLine = () => {
-  const curveRef = useRef<THREE.Line>();
+  const sphereRef = useRef<THREE.Mesh>(null);
   const progress = useRef(0);
 
   // Create curve path
@@ -21,9 +21,9 @@ const AnimatedLine = () => {
     if (progress.current > 1) progress.current = 0;
     
     const point = curve.getPoint(progress.current);
-    if (curveRef.current) {
-      curveRef.current.position.x = point.x;
-      curveRef.current.position.y = point.y;
+    if (sphereRef.current) {
+      sphereRef.current.position.x = point.x;
+      sphereRef.current.position.y = point.y;
     }
   });
 
@@ -35,7 +35,7 @@ const AnimatedLine = () => {
         lineWidth={1}
         opacity={0.5}
       />
-      <Sphere ref={curveRef} args={[0.1, 32, 32]}>
+      <Sphere ref={sphereRef} args={[0.1, 32, 32]}>
         <meshStandardMaterial color="#0EA5E9" emissive="#0EA5E9" emissiveIntensity={0.5} />
       </Sphere>
       {[...Array(5)].map((_, i) => (
