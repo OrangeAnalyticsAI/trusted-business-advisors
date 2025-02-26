@@ -15,11 +15,11 @@ const teamMembers = [
     bio: "Paul Ward is a seasoned expert in industrial operations and digital transformation. With years of experience helping businesses modernize their operations, Paul specializes in implementing cutting-edge solutions that drive efficiency and growth."
   },
   {
-    name: "Jen Payne",
-    expertise: "Logistics & Supply Chain, Manufacturing, Digital Transformation",
-    photo: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
-    initials: "JP",
-    bio: "Jen Payne brings extensive expertise in logistics, supply chain management, and manufacturing processes. Her approach combines traditional best practices with innovative digital solutions to optimize business operations."
+    name: "Mark Akinlade",
+    expertise: "Legal Services",
+    photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+    initials: "MA",
+    bio: "Mark Akinlade is an experienced legal professional providing comprehensive legal services to businesses. His expertise covers corporate law, compliance, and regulatory matters, ensuring businesses navigate legal complexities effectively."
   },
   {
     name: "Natasha Cleeve",
@@ -29,18 +29,18 @@ const teamMembers = [
     bio: "Natasha Cleeve is a specialist in executive recruitment and talent acquisition. Her deep understanding of organizational needs helps companies find and retain top-tier talent, particularly at the C-Suite level."
   },
   {
-    name: "Tim Green",
-    expertise: "Commercial Sales & Marketing",
-    photo: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d",
-    initials: "TG",
-    bio: "Tim Green is a commercial sales and marketing strategist who helps businesses develop and execute effective go-to-market strategies. His expertise spans both traditional and digital marketing channels."
-  },
-  {
     name: "Gabriella Eberhardt",
     expertise: "HR & People Capital",
     photo: "https://images.unsplash.com/photo-1580489944761-15a19d654956",
     initials: "GE",
     bio: "Gabriella Eberhardt is a seasoned HR professional specializing in people capital management. Her expertise lies in developing effective HR strategies, cultural transformation, and implementing people-centric initiatives that drive organizational success."
+  },
+  {
+    name: "Tim Green",
+    expertise: "Commercial Sales & Marketing",
+    photo: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d",
+    initials: "TG",
+    bio: "Tim Green is a commercial sales and marketing strategist who helps businesses develop and execute effective go-to-market strategies. His expertise spans both traditional and digital marketing channels."
   },
   {
     name: "Paul Hardy",
@@ -50,11 +50,11 @@ const teamMembers = [
     bio: "Paul Hardy brings extensive experience in corporate finance, accounting, and mergers & acquisitions. His strategic approach to financial management and M&A transactions helps businesses optimize their financial performance and growth opportunities."
   },
   {
-    name: "Mark Akinlade",
-    expertise: "Legal Services",
-    photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
-    initials: "MA",
-    bio: "Mark Akinlade is an experienced legal professional providing comprehensive legal services to businesses. His expertise covers corporate law, compliance, and regulatory matters, ensuring businesses navigate legal complexities effectively."
+    name: "Jen Payne",
+    expertise: "Logistics & Supply Chain, Manufacturing, Digital Transformation",
+    photo: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
+    initials: "JP",
+    bio: "Jen Payne brings extensive expertise in logistics, supply chain management, and manufacturing processes. Her approach combines traditional best practices with innovative digital solutions to optimize business operations."
   }
 ];
 
