@@ -19,12 +19,14 @@ export default function Auth() {
       if (token && type === "signup") {
         setVerifying(true);
         try {
+          // We need to pass the full token, not token_hash
           const { error } = await supabase.auth.verifyOtp({
-            token_hash: token,
+            token,
             type: "signup",
           });
           
           if (error) {
+            console.error("Verification error:", error);
             toast.error("Verification failed", {
               description: error.message,
             });
@@ -33,11 +35,13 @@ export default function Auth() {
             navigate("/");
           }
         } catch (error: any) {
+          console.error("Verification error:", error);
           toast.error("Verification failed", {
             description: error.message,
           });
+        } finally {
+          setVerifying(false);
         }
-        setVerifying(false);
       }
     };
 
