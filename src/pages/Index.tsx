@@ -10,7 +10,7 @@ export default function Index() {
       
       {/* Hero Section */}
       <section className="pt-32 pb-24 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(225deg,_#FFE29F_0%,_#FFA99F_48%,_#FF719A_100%)] opacity-20 dark:opacity-10 z-0"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary via-primary/20 to-background z-0"></div>
         <div className="absolute inset-0 backdrop-blur-[120px] z-0"></div>
         <div className="container relative z-10">
           <div className="text-center space-y-6 max-w-3xl mx-auto animate-in">

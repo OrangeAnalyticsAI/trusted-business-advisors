@@ -1,3 +1,4 @@
+
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { FileText, Video, Table } from "lucide-react";
@@ -8,6 +9,7 @@ export default function Content() {
       <Navbar />
       
       <section className="h-[150px] mt-16 relative overflow-hidden flex items-center">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary via-primary/20 to-background z-0 animate-[gradient_8s_ease_infinite]"></div>
         <div className="absolute inset-0 bg-[linear-gradient(225deg,_#FFE29F_0%,_#FFA99F_48%,_#FF719A_100%)] opacity-20 dark:opacity-10 z-0"></div>
         <div className="absolute inset-0 backdrop-blur-[120px] z-0"></div>
         <div className="container relative z-10">
