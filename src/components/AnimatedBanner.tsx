@@ -14,10 +14,14 @@ const SimpleRotatingSphere = () => {
   });
 
   return (
-    <mesh ref={meshRef}>
-      <sphereGeometry args={[1, 32, 32]} />
-      <meshBasicMaterial color="#0EA5E9" />
-    </mesh>
+    <>
+      <ambientLight intensity={0.5} />
+      <pointLight position={[10, 10, 10]} />
+      <mesh ref={meshRef}>
+        <sphereGeometry args={[1, 32, 32]} />
+        <meshStandardMaterial color="#0EA5E9" />
+      </mesh>
+    </>
   );
 };
 
@@ -54,7 +58,10 @@ export const AnimatedBanner = () => {
   return (
     <div className="h-[400px] w-full relative bg-background/80">
       <ErrorBoundary>
-        <Canvas>
+        <Canvas
+          camera={{ position: [0, 0, 5] }}
+          gl={{ antialias: true }}
+        >
           <SimpleRotatingSphere />
         </Canvas>
       </ErrorBoundary>
