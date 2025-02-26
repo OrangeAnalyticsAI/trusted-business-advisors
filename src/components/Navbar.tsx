@@ -1,8 +1,16 @@
 
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/button";
+import { toast } from "@/hooks/use-toast";
 
 export function Navbar() {
+  const handleAuthClick = () => {
+    toast({
+      title: "Coming Soon",
+      description: "Jen hasn't built this yet",
+    });
+  };
+
   return (
     <nav className="fixed top-0 w-full z-40 bg-background/80 backdrop-blur-lg border-b">
       <div className="container flex h-16 items-center justify-between">
@@ -24,8 +32,8 @@ export function Navbar() {
         </div>
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          <Button variant="ghost">Sign In</Button>
-          <Button>Get Started</Button>
+          <Button variant="ghost" onClick={handleAuthClick}>Sign In</Button>
+          <Button onClick={handleAuthClick}>Get Started</Button>
         </div>
       </div>
     </nav>

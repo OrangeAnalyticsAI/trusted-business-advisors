@@ -1,8 +1,17 @@
+
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { ArrowRight, FileText, Video, Table, Lock } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 export default function Index() {
+  const handleConsultationClick = () => {
+    toast({
+      title: "Coming Soon",
+      description: "Jen hasn't built this yet",
+    });
+  };
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -78,7 +87,7 @@ export default function Index() {
           <p className="text-muted-foreground mb-8">
             Join our community of business professionals and get instant access to expert resources.
           </p>
-          <Button size="lg" className="gap-2">
+          <Button size="lg" className="gap-2" onClick={handleConsultationClick}>
             Start Your Journey <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
