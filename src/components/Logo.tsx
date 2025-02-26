@@ -1,0 +1,22 @@
+
+import React from 'react';
+
+export function Logo() {
+  return (
+    <div className="fixed left-6 top-6 z-50">
+      <a href="/" className="block p-6 glass rounded-xl hover:scale-105 transition-transform">
+        <div className="flex flex-col text-left leading-tight">
+          <span className="text-lg">
+            <span className="text-blue-900 dark:text-blue-400 font-bold">T</span>rusted
+          </span>
+          <span className="text-lg">
+            <span className="text-blue-900 dark:text-blue-400 font-bold">B</span>usiness
+          </span>
+          <span className="text-lg">
+            <span className="text-blue-900 dark:text-blue-400 font-bold">A</span>dvisors
+          </span>
+        </div>
+      </a>
+    </div>
+  );
+}
