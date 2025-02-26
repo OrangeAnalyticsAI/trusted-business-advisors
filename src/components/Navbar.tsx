@@ -44,8 +44,7 @@ export function Navbar() {
         </div>
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          <Button variant="ghost" onClick={handleAuthClick}>Sign In</Button>
-          <Button onClick={handleAuthClick}>Get Started</Button>
+          <Button onClick={handleAuthClick}>Sign In</Button>
         </div>
       </div>
     </nav>
