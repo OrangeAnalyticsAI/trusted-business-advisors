@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { ArrowRight, FileText, Video, Table, Lock } from "lucide-react";
@@ -41,6 +40,36 @@ export default function Index() {
                 Learn More
               </Button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Navigation Options */}
+      <section className="py-12 border-y bg-background/50 backdrop-blur-sm">
+        <div className="container">
+          <div className="flex flex-wrap justify-center gap-8 sm:gap-16">
+            {[
+              { href: "/content", label: "Content" },
+              { href: "/pricing", label: "Pricing" },
+              { 
+                href: "#consultation", 
+                label: "Book a consultation",
+                onClick: (e: React.MouseEvent) => {
+                  e.preventDefault();
+                  handleConsultationClick();
+                }
+              },
+              { href: "/about", label: "About" }
+            ].map((link, i) => (
+              <a
+                key={i}
+                href={link.href}
+                onClick={link.onClick}
+                className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
           </div>
         </div>
       </section>
