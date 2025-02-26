@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
@@ -94,3 +95,19 @@
     background-position: 0% 50%;
   }
 }
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  25% {
+    transform: translateY(-15px) translateX(15px);
+  }
+  50% {
+    transform: translateY(-30px) translateX(-15px);
+  }
+  75% {
+    transform: translateY(-15px) translateX(-30px);
+  }
+}
+
