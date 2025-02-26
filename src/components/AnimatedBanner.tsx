@@ -27,35 +27,44 @@ export const AnimatedBanner = () => {
       { x: canvas.width * 0.8, y: canvas.height * 0.6, radius: 22, color: '#1D4ED8' },
     ];
 
+    let animationProgress = 0;
+    let direction = 1; // 1 for forward, -1 for backward
+    const animationSpeed = 0.005; // Adjust this value to control animation speed
+
     // Animation
     let animationFrame: number;
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw curved lines between balls
+      // Calculate which segment of the line should be drawn based on animation progress
+      const totalSegments = balls.length - 1;
+      const progressPerSegment = 1 / totalSegments;
+      const currentSegment = Math.floor(animationProgress / progressPerSegment);
+      const segmentProgress = (animationProgress % progressPerSegment) / progressPerSegment;
+
+      // Draw active line segments
       ctx.beginPath();
       ctx.moveTo(balls[0].x, balls[0].y);
-      
+
       for (let i = 0; i < balls.length - 1; i++) {
-        const xc = (balls[i].x + balls[i + 1].x) / 2;
-        const yc = (balls[i].y + balls[i + 1].y) / 2;
-        
-        // Create curved paths between balls
-        ctx.quadraticCurveTo(
-          balls[i].x + Math.sin(Date.now() * 0.001) * 30,
-          balls[i].y + Math.cos(Date.now() * 0.001) * 30,
-          xc,
-          yc
-        );
-        
-        ctx.quadraticCurveTo(
-          balls[i + 1].x - Math.sin(Date.now() * 0.001) * 30,
-          balls[i + 1].y - Math.cos(Date.now() * 0.001) * 30,
-          balls[i + 1].x,
-          balls[i + 1].y
-        );
+        if (i < currentSegment || (i === currentSegment && segmentProgress > 0)) {
+          const startBall = balls[i];
+          const endBall = balls[i + 1];
+          const progress = i === currentSegment ? segmentProgress : 1;
+
+          const xc = startBall.x + (endBall.x - startBall.x) * progress;
+          const yc = startBall.y + (endBall.y - startBall.y) * progress;
+
+          // Create curved paths between balls
+          ctx.quadraticCurveTo(
+            startBall.x + Math.sin(Date.now() * 0.001) * 30,
+            startBall.y + Math.cos(Date.now() * 0.001) * 30,
+            xc,
+            yc
+          );
+        }
       }
-      
+
       // Enhanced line style with gradient and shadow
       const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
       gradient.addColorStop(0, '#4F46E5');
@@ -117,6 +126,16 @@ export const AnimatedBanner = () => {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.fill();
       });
+
+      // Update animation progress
+      animationProgress += animationSpeed * direction;
+
+      // Reverse direction when reaching the end or beginning
+      if (animationProgress >= 1) {
+        direction = -1;
+      } else if (animationProgress <= 0) {
+        direction = 1;
+      }
 
       animationFrame = requestAnimationFrame(animate);
     };
