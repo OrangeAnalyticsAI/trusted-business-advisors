@@ -1,27 +1,15 @@
 
-import React, { useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import React from 'react';
+import { Canvas } from '@react-three/fiber';
 
 function Scene() {
-  const sphereRef = useRef(null);
-
-  useFrame((state, delta) => {
-    if (sphereRef.current) {
-      sphereRef.current.rotation.x += delta * 0.2;
-      sphereRef.current.rotation.y += delta * 0.3;
-    }
-  });
-
   return (
     <>
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[10, 10, 5]} intensity={1} />
-      <mesh ref={sphereRef}>
-        <sphereGeometry args={[1, 32, 32]} />
-        <meshStandardMaterial color="#4F46E5" />
+      <ambientLight />
+      <mesh>
+        <boxGeometry />
+        <meshBasicMaterial color="blue" />
       </mesh>
-      <OrbitControls enableZoom={false} />
     </>
   );
 }
@@ -70,22 +58,10 @@ export const AnimatedBanner = () => {
   return (
     <div className="h-[400px] w-full relative bg-background">
       <ErrorBoundary>
-        <Canvas
-          camera={{
-            position: [0, 0, 5],
-            fov: 50,
-          }}
-          gl={{ 
-            antialias: true,
-            alpha: true,
-            preserveDrawingBuffer: true
-          }}
-          dpr={[1, 2]}
-        >
+        <Canvas>
           <Scene />
         </Canvas>
       </ErrorBoundary>
     </div>
   );
 };
-
