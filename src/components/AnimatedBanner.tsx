@@ -1,30 +1,27 @@
 
 import React from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
 
-const SimpleRotatingSphere = () => {
-  const meshRef = React.useRef<THREE.Mesh>(null);
+function Scene() {
+  const meshRef = React.useRef();
 
-  useFrame(() => {
+  React.useEffect(() => {
     if (meshRef.current) {
-      meshRef.current.rotation.y += 0.01;
+      meshRef.current.rotation.x = 0.5;
     }
-  });
+  }, []);
 
   return (
     <mesh ref={meshRef}>
-      <sphereGeometry args={[1, 32, 32]} />
-      <meshBasicMaterial color={new THREE.Color("#0EA5E9")} />
+      <boxGeometry args={[2, 2, 2]} />
+      <meshNormalMaterial />
     </mesh>
   );
-};
+}
 
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean }
-> {
-  constructor(props: { children: React.ReactNode }) {
+class ErrorBoundary extends React.Component {
+  constructor(props) {
     super(props);
     this.state = { hasError: false };
   }
@@ -33,7 +30,7 @@ class ErrorBoundary extends React.Component<
     return { hasError: true };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  componentDidCatch(error, errorInfo) {
     console.error('ThreeJS Error:', error, errorInfo);
   }
 
@@ -54,16 +51,16 @@ export const AnimatedBanner = () => {
     <div className="h-[400px] w-full relative bg-background/80">
       <ErrorBoundary>
         <Canvas
-          camera={{ position: [0, 0, 5], fov: 75 }}
-          gl={{
+          camera={{ position: [0, 0, 5] }}
+          gl={{ 
             antialias: true,
             alpha: true,
-            powerPreference: "default",
-            failIfMajorPerformanceCaveat: false
           }}
-          dpr={[1, 2]}
         >
-          <SimpleRotatingSphere />
+          <ambientLight intensity={0.5} />
+          <pointLight position={[10, 10, 10]} />
+          <Scene />
+          <OrbitControls enableZoom={false} />
         </Canvas>
       </ErrorBoundary>
     </div>
