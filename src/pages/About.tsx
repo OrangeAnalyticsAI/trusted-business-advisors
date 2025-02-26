@@ -34,6 +34,27 @@ const teamMembers = [
     photo: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d",
     initials: "TG",
     bio: "Tim Green is a commercial sales and marketing strategist who helps businesses develop and execute effective go-to-market strategies. His expertise spans both traditional and digital marketing channels."
+  },
+  {
+    name: "Gabriella Eberhardt",
+    expertise: "HR & People Capital",
+    photo: "https://images.unsplash.com/photo-1580489944761-15a19d654956",
+    initials: "GE",
+    bio: "Gabriella Eberhardt is a seasoned HR professional specializing in people capital management. Her expertise lies in developing effective HR strategies, cultural transformation, and implementing people-centric initiatives that drive organizational success."
+  },
+  {
+    name: "Paul Hardy",
+    expertise: "Corporate Finance, Accounting, M&A",
+    photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e",
+    initials: "PH",
+    bio: "Paul Hardy brings extensive experience in corporate finance, accounting, and mergers & acquisitions. His strategic approach to financial management and M&A transactions helps businesses optimize their financial performance and growth opportunities."
+  },
+  {
+    name: "Mark Akinlade",
+    expertise: "Legal Services",
+    photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+    initials: "MA",
+    bio: "Mark Akinlade is an experienced legal professional providing comprehensive legal services to businesses. His expertise covers corporate law, compliance, and regulatory matters, ensuring businesses navigate legal complexities effectively."
   }
 ];
 
