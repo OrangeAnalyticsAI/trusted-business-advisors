@@ -15,9 +15,13 @@ export default function Pricing() {
         <div className="absolute inset-0 backdrop-blur-[120px] z-0"></div>
         <div className="container relative z-10">
           <div className="text-center animate-in">
-            <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl">
-              Simple, transparent pricing
-            </h1>
+            <div className="relative inline-block">
+              <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
+                Simple, Transparent
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80"> Pricing</span>
+              </h1>
+              <div className="absolute -inset-x-6 -inset-y-4 bg-gradient-to-r from-primary/20 to-primary/0 blur-2xl -z-10 animate-pulse"></div>
+            </div>
             <p className="mt-4 text-base text-muted-foreground">
               Choose the plan that's right for your business
             </p>
