@@ -92,7 +92,7 @@ export default function Auth() {
 
   if (verifying) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4 pt-16 sm:pt-32">
         <div className="text-center">
           <h2 className="text-2xl font-semibold mb-2">Verifying your email...</h2>
           <p className="text-muted-foreground">Please wait while we verify your email address.</p>
@@ -103,7 +103,7 @@ export default function Auth() {
 
   if (verificationSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4 pt-16 sm:pt-32">
         <div className="text-center">
           <h2 className="text-2xl font-semibold mb-2">
             {fullName ? `Thank you for signing up, ${fullName}!` : 'Thank you for signing up!'}
@@ -115,7 +115,7 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 pt-16 sm:pt-32">
       <AuthForm />
     </div>
   );
