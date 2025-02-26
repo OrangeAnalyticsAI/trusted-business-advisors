@@ -10,7 +10,7 @@ const teamMembers = [
   {
     name: "Paul Ward",
     expertise: "Industrial, Operational, Digital Transformation",
-    photo: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952",
+    photo: "/lovable-uploads/587e2bcb-bb0c-441d-8b4d-3f1f27e324ac.png",
     initials: "PW",
     bio: "Paul Ward is a seasoned expert in industrial operations and digital transformation. With years of experience helping businesses modernize their operations, Paul specializes in implementing cutting-edge solutions that drive efficiency and growth."
   },
