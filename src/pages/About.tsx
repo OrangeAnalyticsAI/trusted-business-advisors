@@ -45,7 +45,7 @@ const teamMembers = [
   {
     name: "Paul Hardy",
     expertise: "Corporate Finance, Accounting, M&A",
-    photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e",
+    photo: "https://images.unsplash.com/photo-1460925895917-afdab827c52f",
     initials: "PH",
     bio: "Paul Hardy brings extensive experience in corporate finance, accounting, and mergers & acquisitions. His strategic approach to financial management and M&A transactions helps businesses optimize their financial performance and growth opportunities."
   },
