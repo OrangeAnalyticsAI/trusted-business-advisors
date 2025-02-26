@@ -1,17 +1,9 @@
-
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { ArrowRight, FileText, Video, Table, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Index() {
-  const handleConsultationClick = () => {
-    toast("Coming Soon", {
-      description: "Jen hasn't built this yet",
-      position: "top-center",
-    });
-  };
-
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -34,8 +26,8 @@ export default function Index() {
               Access premium business content from industry experts. Transform your business with actionable insights and professional guidance.
             </p>
             <div className="flex justify-center gap-4">
-              <Button size="lg" className="gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/10 transition-all duration-300">
-                Get Started <ArrowRight className="h-4 w-4" />
+              <Button size="lg" disabled className="gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/10 transition-all duration-300">
+                Jen hasn't built this yet <ArrowRight className="h-4 w-4" />
               </Button>
               <Button size="lg" variant="outline" className="backdrop-blur-sm">
                 Learn More
@@ -52,20 +44,12 @@ export default function Index() {
             {[
               { href: "/content", label: "Content" },
               { href: "/pricing", label: "Pricing" },
-              { 
-                href: "#consultation", 
-                label: "Book a consultation",
-                onClick: (e: React.MouseEvent) => {
-                  e.preventDefault();
-                  handleConsultationClick();
-                }
-              },
+              { href: "#consultation", label: "Book a consultation" },
               { href: "/about", label: "About" }
             ].map((link, i) => (
               <a
                 key={i}
                 href={link.href}
-                onClick={link.onClick}
                 className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
               >
                 {link.label}
@@ -117,7 +101,7 @@ export default function Index() {
           <p className="text-muted-foreground text-sm sm:text-base mb-6 sm:mb-8">
             Join our community of business professionals and get instant access to expert resources.
           </p>
-          <Button size="lg" onClick={handleConsultationClick} className="gap-2">
+          <Button size="lg" className="gap-2">
             Start Your Journey <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
