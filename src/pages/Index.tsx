@@ -22,7 +22,7 @@ export default function Index() {
         <div className="absolute inset-0 bg-[linear-gradient(225deg,_#FFE29F_0%,_#FFA99F_48%,_#FF719A_100%)] opacity-20 dark:opacity-10 z-0"></div>
         <div className="absolute inset-0 backdrop-blur-[120px] z-0"></div>
         <div className="container relative z-10">
-          <div className="text-center space-y-3 sm:space-y-6 max-w-3xl mx-auto animate-in mt-12 sm:mt-0">
+          <div className="text-center space-y-3 sm:space-y-6 max-w-3xl mx-auto animate-in mt-16 sm:mt-0">
             <div className="relative inline-block">
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
                 Expert Business Insights,
