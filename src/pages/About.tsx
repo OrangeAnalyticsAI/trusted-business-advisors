@@ -24,7 +24,7 @@ const teamMembers = [
   {
     name: "Natasha Cleeve",
     expertise: "Recruitment, Interim, C-Suite & Talent Acquisition",
-    photo: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2",
+    photo: "/lovable-uploads/3360b116-7593-424d-973e-b3e77021044f.png",
     initials: "NC",
     bio: "Natasha Cleeve is a specialist in executive recruitment and talent acquisition. Her deep understanding of organizational needs helps companies find and retain top-tier talent, particularly at the C-Suite level."
   },
