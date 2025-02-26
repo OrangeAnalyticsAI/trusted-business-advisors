@@ -32,9 +32,6 @@ const AnimatedLine = () => {
 
   return (
     <>
-      <ambientLight intensity={0.8} />
-      <pointLight position={[10, 10, 10]} intensity={1} />
-      
       {/* Curved line */}
       <Line 
         points={points.map(p => [p.x, p.y, p.z])} 
@@ -45,10 +42,8 @@ const AnimatedLine = () => {
       {/* Moving sphere */}
       <mesh ref={sphereRef}>
         <sphereGeometry args={[0.2, 32, 32]} />
-        <meshStandardMaterial 
+        <meshBasicMaterial 
           color="#0EA5E9"
-          metalness={0.5}
-          roughness={0.2}
         />
       </mesh>
 
@@ -58,12 +53,10 @@ const AnimatedLine = () => {
         .map((point, i) => (
           <mesh key={i} position={[point.x, point.y, point.z]}>
             <sphereGeometry args={[0.15, 32, 32]} />
-            <meshStandardMaterial 
+            <meshBasicMaterial 
               color="#0EA5E9"
               transparent
               opacity={0.7}
-              metalness={0.5}
-              roughness={0.2}
             />
           </mesh>
         ))}
@@ -108,6 +101,12 @@ export const AnimatedBanner = () => {
           camera={{ 
             position: [0, 0, 8],
             fov: 45
+          }}
+          gl={{
+            antialias: true,
+            alpha: true,
+            powerPreference: 'default',
+            failIfMajorPerformanceCaveat: false
           }}
           style={{ 
             position: 'absolute',
