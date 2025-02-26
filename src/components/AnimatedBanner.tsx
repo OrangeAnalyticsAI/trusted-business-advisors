@@ -1,16 +1,14 @@
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
 
-function Scene() {
+function Box() {
   return (
-    <>
-      <ambientLight />
-      <mesh>
-        <boxGeometry />
-        <meshBasicMaterial color="blue" />
-      </mesh>
-    </>
+    <mesh>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshNormalMaterial />
+    </mesh>
   );
 }
 
@@ -58,10 +56,24 @@ export const AnimatedBanner = () => {
   return (
     <div className="h-[400px] w-full relative bg-background">
       <ErrorBoundary>
-        <Canvas>
-          <Scene />
-        </Canvas>
+        <Suspense fallback={<div>Loading...</div>}>
+          <Canvas
+            gl={{ 
+              antialias: true,
+              powerPreference: 'high-performance',
+              failIfMajorPerformanceCaveat: true
+            }}
+            camera={{ position: [0, 0, 3] }}
+            style={{ background: 'transparent' }}
+          >
+            <ambientLight intensity={0.5} />
+            <pointLight position={[10, 10, 10]} />
+            <Box />
+            <OrbitControls makeDefault />
+          </Canvas>
+        </Suspense>
       </ErrorBoundary>
     </div>
   );
 };
+
