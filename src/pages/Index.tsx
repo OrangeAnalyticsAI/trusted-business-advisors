@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { ArrowRight, FileText, Video, Table, Lock } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 export default function Index() {
   return (
@@ -29,8 +30,8 @@ export default function Index() {
               <Button size="lg" disabled className="gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/10 transition-all duration-300">
                 Jen hasn't built this yet <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" className="backdrop-blur-sm">
-                Learn More
+              <Button size="lg" variant="outline" className="backdrop-blur-sm" asChild>
+                <Link to="/about">Learn More</Link>
               </Button>
             </div>
           </div>
