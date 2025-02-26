@@ -10,22 +10,26 @@ export default function Index() {
       
       {/* Hero Section */}
       <section className="pt-32 pb-24 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/20 via-background to-background z-0"></div>
-        <div className="absolute inset-0 bg-[linear-gradient(109.6deg,_rgba(223,234,247,0.9)_11.2%,_rgba(244,248,252,0.9)_91.1%)] dark:bg-[linear-gradient(to_right,_rgba(36,57,73,0.9),_rgba(81,127,164,0.9))] z-0"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary via-primary/20 to-background z-0 animate-[gradient_8s_ease_infinite]"></div>
+        <div className="absolute inset-0 bg-[linear-gradient(225deg,_#FFE29F_0%,_#FFA99F_48%,_#FF719A_100%)] opacity-20 dark:opacity-10 z-0"></div>
+        <div className="absolute inset-0 backdrop-blur-[120px] z-0"></div>
         <div className="container relative z-10">
           <div className="text-center space-y-6 max-w-3xl mx-auto animate-in">
-            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-              Expert Business Insights,
-              <span className="text-primary"> On Demand</span>
-            </h1>
+            <div className="relative inline-block">
+              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
+                Expert Business Insights,
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80"> On Demand</span>
+              </h1>
+              <div className="absolute -inset-x-6 -inset-y-4 bg-gradient-to-r from-primary/20 to-primary/0 blur-2xl -z-10 animate-pulse"></div>
+            </div>
             <p className="text-xl text-muted-foreground">
               Access premium business content from industry experts. Transform your business with actionable insights and professional guidance.
             </p>
             <div className="flex justify-center gap-4">
-              <Button size="lg" className="gap-2">
+              <Button size="lg" className="gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/10 transition-all duration-300">
                 Get Started <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline">
+              <Button size="lg" variant="outline" className="backdrop-blur-sm">
                 Learn More
               </Button>
             </div>
