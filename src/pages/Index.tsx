@@ -2,7 +2,6 @@
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { ArrowRight, FileText, Video, Table, Lock } from "lucide-react";
-import { AnimatedBanner } from "@/components/AnimatedBanner";
 
 export default function Index() {
   return (
@@ -15,7 +14,6 @@ export default function Index() {
         <div className="absolute inset-0 backdrop-blur-[120px] z-0"></div>
         <div className="container relative z-10">
           <div className="text-center space-y-6 max-w-3xl mx-auto animate-in">
-            <AnimatedBanner />
             <div className="relative inline-block">
               <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
                 Expert Business Insights,
