@@ -19,12 +19,12 @@ export const AnimatedBanner = () => {
     setCanvasSize();
     window.addEventListener('resize', setCanvasSize);
 
-    // Digital balls configuration
+    // Digital balls configuration with larger radius and more vibrant colors
     const balls = [
-      { x: canvas.width * 0.2, y: canvas.height * 0.3, radius: 8, color: '#9b87f5' },
-      { x: canvas.width * 0.4, y: canvas.height * 0.7, radius: 8, color: '#8B5CF6' },
-      { x: canvas.width * 0.6, y: canvas.height * 0.4, radius: 8, color: '#1EAEDB' },
-      { x: canvas.width * 0.8, y: canvas.height * 0.6, radius: 8, color: '#D3E4FD' },
+      { x: canvas.width * 0.2, y: canvas.height * 0.3, radius: 20, color: '#7C3AED' },
+      { x: canvas.width * 0.4, y: canvas.height * 0.7, radius: 24, color: '#4F46E5' },
+      { x: canvas.width * 0.6, y: canvas.height * 0.4, radius: 28, color: '#2563EB' },
+      { x: canvas.width * 0.8, y: canvas.height * 0.6, radius: 22, color: '#1D4ED8' },
     ];
 
     // Animation
@@ -32,38 +32,89 @@ export const AnimatedBanner = () => {
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw lines between balls
+      // Draw curved lines between balls
       ctx.beginPath();
       ctx.moveTo(balls[0].x, balls[0].y);
-      for (let i = 1; i < balls.length; i++) {
-        ctx.lineTo(balls[i].x, balls[i].y);
+      
+      for (let i = 0; i < balls.length - 1; i++) {
+        const xc = (balls[i].x + balls[i + 1].x) / 2;
+        const yc = (balls[i].y + balls[i + 1].y) / 2;
+        
+        // Create curved paths between balls
+        ctx.quadraticCurveTo(
+          balls[i].x + Math.sin(Date.now() * 0.001) * 30,
+          balls[i].y + Math.cos(Date.now() * 0.001) * 30,
+          xc,
+          yc
+        );
+        
+        ctx.quadraticCurveTo(
+          balls[i + 1].x - Math.sin(Date.now() * 0.001) * 30,
+          balls[i + 1].y - Math.cos(Date.now() * 0.001) * 30,
+          balls[i + 1].x,
+          balls[i + 1].y
+        );
       }
-      ctx.strokeStyle = '#8E9196';
-      ctx.lineWidth = 2;
+      
+      // Enhanced line style with gradient and shadow
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, '#4F46E5');
+      gradient.addColorStop(1, '#2563EB');
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = 3;
+      ctx.shadowColor = '#4F46E5';
+      ctx.shadowBlur = 10;
       ctx.stroke();
+      ctx.shadowBlur = 0;
 
-      // Draw balls
+      // Draw enhanced 3D balls
       balls.forEach((ball, index) => {
-        // Update ball position with subtle floating animation
-        ball.y += Math.sin(Date.now() * 0.001 + index) * 0.5;
-        ball.x += Math.cos(Date.now() * 0.001 + index) * 0.3;
+        // Update ball position with smooth floating animation
+        ball.y += Math.sin(Date.now() * 0.001 + index) * 0.7;
+        ball.x += Math.cos(Date.now() * 0.001 + index) * 0.5;
 
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-        ctx.fillStyle = ball.color;
-        ctx.fill();
-
-        // Add glow effect
-        const gradient = ctx.createRadialGradient(
+        // Create 3D effect with multiple layers
+        // Outer glow
+        const glowGradient = ctx.createRadialGradient(
           ball.x, ball.y, 0,
           ball.x, ball.y, ball.radius * 2
         );
-        gradient.addColorStop(0, ball.color + '40');
-        gradient.addColorStop(1, 'transparent');
+        glowGradient.addColorStop(0, ball.color + '40');
+        glowGradient.addColorStop(1, 'transparent');
         
         ctx.beginPath();
         ctx.arc(ball.x, ball.y, ball.radius * 2, 0, Math.PI * 2);
-        ctx.fillStyle = gradient;
+        ctx.fillStyle = glowGradient;
+        ctx.fill();
+
+        // Main ball with gradient
+        const ballGradient = ctx.createRadialGradient(
+          ball.x - ball.radius * 0.3,
+          ball.y - ball.radius * 0.3,
+          ball.radius * 0.1,
+          ball.x,
+          ball.y,
+          ball.radius
+        );
+        ballGradient.addColorStop(0, '#ffffff');
+        ballGradient.addColorStop(0.3, ball.color);
+        ballGradient.addColorStop(1, ball.color + 'dd');
+
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+        ctx.fillStyle = ballGradient;
+        ctx.fill();
+
+        // Highlight for 3D effect
+        ctx.beginPath();
+        ctx.arc(
+          ball.x - ball.radius * 0.2,
+          ball.y - ball.radius * 0.2,
+          ball.radius * 0.4,
+          0,
+          Math.PI * 2
+        );
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.fill();
       });
 
@@ -101,3 +152,4 @@ export const AnimatedBanner = () => {
     </div>
   );
 };
+
