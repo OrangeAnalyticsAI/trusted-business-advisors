@@ -52,7 +52,7 @@ const teamMembers = [
   {
     name: "Jen Payne",
     expertise: "Logistics & Supply Chain, Manufacturing, Digital Transformation",
-    photo: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
+    photo: "/lovable-uploads/2e4f4225-3cea-40e1-a82d-66aa42534987.png",
     initials: "JP",
     bio: "Jen Payne brings extensive expertise in logistics, supply chain management, and manufacturing processes. Her approach combines traditional best practices with innovative digital solutions to optimize business operations."
   }
