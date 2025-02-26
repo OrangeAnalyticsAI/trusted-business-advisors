@@ -10,6 +10,7 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const [verifying, setVerifying] = useState(false);
   const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [fullName, setFullName] = useState<string>("");
 
   useEffect(() => {
     // Handle email verification
@@ -33,6 +34,19 @@ export default function Auth() {
               description: error.message,
             });
           } else if (data?.user) {
+            // Fetch the user's profile data
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', data.user.id)
+              .single();
+
+            if (profileError) {
+              console.error("Error fetching profile:", profileError);
+            } else if (profileData) {
+              setFullName(profileData.full_name || '');
+            }
+
             setVerificationSuccess(true);
             toast.success("Email verified successfully!");
             // Add a delay before redirecting
@@ -91,7 +105,9 @@ export default function Auth() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold mb-2">Thank you for signing up!</h2>
+          <h2 className="text-2xl font-semibold mb-2">
+            {fullName ? `Thank you for signing up, ${fullName}!` : 'Thank you for signing up!'}
+          </h2>
           <p className="text-muted-foreground">You'll be redirected to the home page in a moment...</p>
         </div>
       </div>
