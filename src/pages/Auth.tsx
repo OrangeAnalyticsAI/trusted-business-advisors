@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthForm } from "@/components/AuthForm";
@@ -18,9 +19,9 @@ export default function Auth() {
       if (token && type === "signup") {
         setVerifying(true);
         try {
-          const { error } = await supabase.auth.verifyOtp({
+          const { data, error } = await supabase.auth.verifyOtp({
+            token,
             type: "signup",
-            token_hash: token,
           });
           
           if (error) {
@@ -28,7 +29,7 @@ export default function Auth() {
             toast.error("Verification failed", {
               description: error.message,
             });
-          } else {
+          } else if (data?.user) {
             toast.success("Email verified successfully!");
             navigate("/");
           }
