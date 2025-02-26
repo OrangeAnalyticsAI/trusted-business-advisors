@@ -1,22 +1,18 @@
 
-import React, { useRef, Suspense } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import React, { useRef, useEffect, Suspense } from 'react';
+import { Canvas } from '@react-three/fiber';
 
-function Box() {
-  const meshRef = useRef<THREE.Mesh>(null);
+function Scene() {
+  const meshRef = useRef(null);
 
-  useFrame((state, delta) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.x += delta * 0.5;
-      meshRef.current.rotation.y += delta * 0.5;
-    }
-  });
+  useEffect(() => {
+    console.log('Scene mounted', meshRef.current);
+  }, []);
 
   return (
     <mesh ref={meshRef}>
       <boxGeometry args={[1, 1, 1]} />
-      <meshNormalMaterial />
+      <meshStandardMaterial color="hotpink" />
     </mesh>
   );
 }
@@ -27,6 +23,7 @@ interface ErrorBoundaryProps {
 
 interface ErrorBoundaryState {
   hasError: boolean;
+  error?: Error;
 }
 
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -35,19 +32,24 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(): ErrorBoundaryState {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error) {
+    console.error('Three.js Error in getDerivedStateFromError:', error);
+    return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ThreeJS Error:', error, errorInfo);
+    console.error('Three.js Error in componentDidCatch:', error);
+    console.error('Error Info:', errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-          Failed to load 3D animation
+        <div className="w-full h-full flex items-center justify-center flex-col gap-4 text-muted-foreground">
+          <div>Failed to load 3D animation</div>
+          <div className="text-sm opacity-50">
+            {this.state.error?.message || 'Unknown error'}
+          </div>
         </div>
       );
     }
@@ -56,21 +58,27 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 }
 
 export const AnimatedBanner = () => {
+  console.log('AnimatedBanner rendering');
+
   return (
     <div className="h-[400px] w-full relative">
       <ErrorBoundary>
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div className="w-full h-full flex items-center justify-center">Loading 3D scene...</div>}>
           <Canvas
-            camera={{
-              fov: 75,
-              near: 0.1,
-              far: 1000,
-              position: [0, 0, 4]
+            gl={{
+              antialias: true,
+              alpha: true,
+              powerPreference: 'default',
             }}
+            camera={{
+              position: [0, 0, 5],
+              fov: 75,
+            }}
+            dpr={window.devicePixelRatio}
           >
             <ambientLight intensity={0.5} />
             <pointLight position={[10, 10, 10]} />
-            <Box />
+            <Scene />
           </Canvas>
         </Suspense>
       </ErrorBoundary>
