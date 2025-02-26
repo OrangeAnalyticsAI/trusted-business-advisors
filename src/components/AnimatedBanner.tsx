@@ -36,29 +36,30 @@ const AnimatedLine = () => {
         color="white"
         lineWidth={1}
       />
-      <Sphere ref={sphereRef} args={[0.1, 32, 32]}>
-        <meshStandardMaterial 
-          color={new THREE.Color("#0EA5E9")}
-          emissive={new THREE.Color("#0EA5E9")}
+      <mesh ref={sphereRef}>
+        <sphereGeometry args={[0.1, 32, 32]} />
+        <meshStandardMaterial
+          color="#0EA5E9"
+          emissive="#0EA5E9"
           emissiveIntensity={0.5}
         />
-      </Sphere>
+      </mesh>
       {[...Array(5)].map((_, i) => (
-        <Sphere
+        <mesh
           key={i}
           position={[
             Math.cos(i * Math.PI * 0.4) * 2,
             Math.sin(i * Math.PI * 0.4) * 2,
             0
           ]}
-          args={[0.2, 32, 32]}
         >
-          <meshStandardMaterial 
-            color={new THREE.Color("#0EA5E9")}
+          <sphereGeometry args={[0.2, 32, 32]} />
+          <meshStandardMaterial
+            color="#0EA5E9"
             transparent
             opacity={0.7}
           />
-        </Sphere>
+        </mesh>
       ))}
     </>
   );
@@ -115,3 +116,4 @@ export const AnimatedBanner = () => {
     </div>
   );
 };
+
