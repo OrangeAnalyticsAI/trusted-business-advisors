@@ -7,13 +7,13 @@ export function Logo() {
       <a href="/" className="block p-6 glass rounded-xl hover:scale-105 transition-transform">
         <div className="flex flex-col text-left leading-tight">
           <span className="text-lg">
-            <span className="text-blue-900 dark:text-blue-400 font-bold">T</span>rusted
+            <span className="text-[#0EA5E9] font-bold">T</span>rusted
           </span>
           <span className="text-lg">
-            <span className="text-blue-900 dark:text-blue-400 font-bold">B</span>usiness
+            <span className="text-[#0EA5E9] font-bold">B</span>usiness
           </span>
           <span className="text-lg">
-            <span className="text-blue-900 dark:text-blue-400 font-bold">A</span>dvisors
+            <span className="text-[#0EA5E9] font-bold">A</span>dvisors
           </span>
         </div>
       </a>
