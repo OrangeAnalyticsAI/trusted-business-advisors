@@ -9,22 +9,26 @@ export default function Index() {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-24 container">
-        <div className="text-center space-y-6 max-w-3xl mx-auto animate-in">
-          <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-            Expert Business Insights,
-            <span className="text-primary"> On Demand</span>
-          </h1>
-          <p className="text-xl text-muted-foreground">
-            Access premium business content from industry experts. Transform your business with actionable insights and professional guidance.
-          </p>
-          <div className="flex justify-center gap-4">
-            <Button size="lg" className="gap-2">
-              Get Started <ArrowRight className="h-4 w-4" />
-            </Button>
-            <Button size="lg" variant="outline">
-              Learn More
-            </Button>
+      <section className="pt-32 pb-24 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/20 via-background to-background z-0"></div>
+        <div className="absolute inset-0 bg-[linear-gradient(109.6deg,_rgba(223,234,247,0.9)_11.2%,_rgba(244,248,252,0.9)_91.1%)] dark:bg-[linear-gradient(to_right,_rgba(36,57,73,0.9),_rgba(81,127,164,0.9))] z-0"></div>
+        <div className="container relative z-10">
+          <div className="text-center space-y-6 max-w-3xl mx-auto animate-in">
+            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
+              Expert Business Insights,
+              <span className="text-primary"> On Demand</span>
+            </h1>
+            <p className="text-xl text-muted-foreground">
+              Access premium business content from industry experts. Transform your business with actionable insights and professional guidance.
+            </p>
+            <div className="flex justify-center gap-4">
+              <Button size="lg" className="gap-2">
+                Get Started <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Button size="lg" variant="outline">
+                Learn More
+              </Button>
+            </div>
           </div>
         </div>
       </section>
