@@ -87,7 +87,7 @@ export default function Index() {
           <p className="text-muted-foreground mb-8">
             Join our community of business professionals and get instant access to expert resources.
           </p>
-          <Button size="lg" className="gap-2" onClick={handleConsultationClick}>
+          <Button size="lg" onClick={handleConsultationClick} className="gap-2">
             Start Your Journey <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
