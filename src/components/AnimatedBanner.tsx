@@ -1,19 +1,28 @@
 
-import React, { useRef, useEffect, Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { useRef } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
 
 function Scene() {
-  const meshRef = useRef(null);
+  const sphereRef = useRef(null);
 
-  useEffect(() => {
-    console.log('Scene mounted', meshRef.current);
-  }, []);
+  useFrame((state, delta) => {
+    if (sphereRef.current) {
+      sphereRef.current.rotation.x += delta * 0.2;
+      sphereRef.current.rotation.y += delta * 0.3;
+    }
+  });
 
   return (
-    <mesh ref={meshRef}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color="hotpink" />
-    </mesh>
+    <>
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[10, 10, 5]} intensity={1} />
+      <mesh ref={sphereRef}>
+        <sphereGeometry args={[1, 32, 32]} />
+        <meshStandardMaterial color="#4F46E5" />
+      </mesh>
+      <OrbitControls enableZoom={false} />
+    </>
   );
 }
 
@@ -33,12 +42,12 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   static getDerivedStateFromError(error: Error) {
-    console.error('Three.js Error in getDerivedStateFromError:', error);
+    console.error('Three.js Error:', error);
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Three.js Error in componentDidCatch:', error);
+    console.error('Three.js Error:', error);
     console.error('Error Info:', errorInfo);
   }
 
@@ -58,30 +67,25 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 }
 
 export const AnimatedBanner = () => {
-  console.log('AnimatedBanner rendering');
-
   return (
-    <div className="h-[400px] w-full relative">
+    <div className="h-[400px] w-full relative bg-background">
       <ErrorBoundary>
-        <Suspense fallback={<div className="w-full h-full flex items-center justify-center">Loading 3D scene...</div>}>
-          <Canvas
-            gl={{
-              antialias: true,
-              alpha: true,
-              powerPreference: 'default',
-            }}
-            camera={{
-              position: [0, 0, 5],
-              fov: 75,
-            }}
-            dpr={window.devicePixelRatio}
-          >
-            <ambientLight intensity={0.5} />
-            <pointLight position={[10, 10, 10]} />
-            <Scene />
-          </Canvas>
-        </Suspense>
+        <Canvas
+          camera={{
+            position: [0, 0, 5],
+            fov: 50,
+          }}
+          gl={{ 
+            antialias: true,
+            alpha: true,
+            preserveDrawingBuffer: true
+          }}
+          dpr={[1, 2]}
+        >
+          <Scene />
+        </Canvas>
       </ErrorBoundary>
     </div>
   );
 };
+
