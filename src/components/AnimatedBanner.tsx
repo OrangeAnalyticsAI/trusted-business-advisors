@@ -76,7 +76,7 @@ export const AnimatedBanner = () => {
       ctx.stroke();
       ctx.shadowBlur = 0;
 
-      // Draw enhanced 3D balls
+      // Draw enhanced 3D balls with floating animation
       balls.forEach((ball, index) => {
         // Update ball position with smooth floating animation
         ball.y += Math.sin(Date.now() * 0.001 + index) * 0.7;
@@ -150,6 +150,8 @@ export const AnimatedBanner = () => {
 
   return (
     <div className="h-[400px] w-full relative bg-background overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary via-primary/20 to-background z-0"></div>
+      <div className="absolute inset-0 backdrop-blur-[120px] z-0"></div>
       <canvas 
         ref={canvasRef} 
         className="w-full h-full"
@@ -171,4 +173,3 @@ export const AnimatedBanner = () => {
     </div>
   );
 };
-
