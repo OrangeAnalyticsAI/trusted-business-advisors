@@ -1,15 +1,22 @@
 
 import React from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
 
 const SimpleRotatingSphere = () => {
+  const meshRef = React.useRef<THREE.Mesh>(null);
+
+  useFrame(() => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += 0.01;
+    }
+  });
+
   return (
-    <>
-      <mesh>
-        <sphereGeometry args={[1, 32, 32]} />
-        <meshBasicMaterial color="#0EA5E9" />
-      </mesh>
-    </>
+    <mesh ref={meshRef}>
+      <sphereGeometry args={[1, 32, 32]} />
+      <meshBasicMaterial color={new THREE.Color("#0EA5E9")} />
+    </mesh>
   );
 };
 
@@ -47,12 +54,14 @@ export const AnimatedBanner = () => {
     <div className="h-[400px] w-full relative bg-background/80">
       <ErrorBoundary>
         <Canvas
-          camera={{ position: [0, 0, 5] }}
+          camera={{ position: [0, 0, 5], fov: 75 }}
           gl={{
             antialias: true,
             alpha: true,
-            preserveDrawingBuffer: true
+            powerPreference: "default",
+            failIfMajorPerformanceCaveat: false
           }}
+          dpr={[1, 2]}
         >
           <SimpleRotatingSphere />
         </Canvas>
