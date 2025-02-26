@@ -9,7 +9,7 @@ export default function Content() {
       <Navbar />
       
       <div className="container pt-32 pb-24">
-        <h1 className="text-4xl font-bold mb-8">Premium Business Content</h1>
+        <h1 className="text-4xl font-bold mb-12 text-center mt-8">Premium Business Content</h1>
         
         {/* Video Content Section */}
         <section className="mb-12">
