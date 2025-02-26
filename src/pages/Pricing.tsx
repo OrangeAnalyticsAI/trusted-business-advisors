@@ -2,7 +2,7 @@
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check } from "lucide-react";
+import { Check, Calendar } from "lucide-react";
 
 export default function Pricing() {
   return (
@@ -26,7 +26,7 @@ export default function Pricing() {
       </section>
 
       <div className="container pb-24">
-        <div className="grid md:grid-cols-2 gap-8 items-start">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
           {/* Premium Business Content Subscription */}
           <Card className="relative">
             <CardHeader>
@@ -100,6 +100,46 @@ export default function Pricing() {
             <CardFooter>
               <Button className="w-full" variant="secondary" size="lg">
                 Contact Sales
+              </Button>
+            </CardFooter>
+          </Card>
+
+          {/* Book a Consultation */}
+          <Card className="relative bg-primary/5">
+            <CardHeader>
+              <CardTitle>Book a Consultation</CardTitle>
+              <CardDescription>Get personalized guidance for your business</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-baseline">
+                  <span className="text-3xl font-bold">Free</span>
+                  <span className="ml-1 text-muted-foreground">/30 min session</span>
+                </div>
+                <ul className="space-y-2.5">
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-primary" />
+                    <span>One-on-one consultation</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-primary" />
+                    <span>Needs assessment</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-primary" />
+                    <span>Tailored recommendations</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-primary" />
+                    <span>No obligation</span>
+                  </li>
+                </ul>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button className="w-full" variant="secondary" size="lg">
+                <Calendar className="mr-2" />
+                Schedule Now
               </Button>
             </CardFooter>
           </Card>
