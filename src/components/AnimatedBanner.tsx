@@ -66,16 +66,54 @@ const AnimatedLine = () => {
 
 export const AnimatedBanner = () => {
   return (
-    <div className="h-[400px] w-full relative">
-      <Canvas
-        camera={{ position: [0, 0, 10], fov: 50 }}
-        gl={{ antialias: true, alpha: true }}
-        style={{ background: 'transparent' }}
-      >
-        <Suspense fallback={null}>
-          <AnimatedLine />
-        </Suspense>
-      </Canvas>
+    <div className="h-[400px] w-full relative" style={{ background: 'transparent' }}>
+      <ErrorBoundary>
+        <Canvas
+          camera={{ position: [0, 0, 10], fov: 50 }}
+          gl={{ 
+            antialias: true, 
+            alpha: true,
+            preserveDrawingBuffer: true,
+            powerPreference: "high-performance"
+          }}
+          style={{ 
+            background: 'transparent',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%'
+          }}
+        >
+          <Suspense fallback={null}>
+            <AnimatedLine />
+          </Suspense>
+        </Canvas>
+      </ErrorBoundary>
     </div>
   );
 };
+
+// Add ErrorBoundary component to catch and handle any Three.js errors
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('ThreeJS Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <div className="w-full h-full flex items-center justify-center">Failed to load 3D animation</div>;
+    }
+
+    return this.props.children;
+  }
+}
