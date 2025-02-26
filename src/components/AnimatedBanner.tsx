@@ -1,5 +1,5 @@
 
-import { useRef } from 'react';
+import { useRef, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Sphere, Line } from '@react-three/drei';
 import * as THREE from 'three';
@@ -29,14 +29,19 @@ const AnimatedLine = () => {
 
   return (
     <>
+      <ambientLight intensity={0.5} />
+      <pointLight position={[10, 10, 10]} intensity={1} />
       <Line
         points={curve.getPoints(50)}
         color="white"
         lineWidth={1}
-        opacity={0.5}
       />
       <Sphere ref={sphereRef} args={[0.1, 32, 32]}>
-        <meshStandardMaterial color="#0EA5E9" emissive="#0EA5E9" emissiveIntensity={0.5} />
+        <meshStandardMaterial 
+          color={new THREE.Color("#0EA5E9")}
+          emissive={new THREE.Color("#0EA5E9")}
+          emissiveIntensity={0.5}
+        />
       </Sphere>
       {[...Array(5)].map((_, i) => (
         <Sphere
@@ -48,7 +53,11 @@ const AnimatedLine = () => {
           ]}
           args={[0.2, 32, 32]}
         >
-          <meshStandardMaterial color="#0EA5E9" opacity={0.7} transparent />
+          <meshStandardMaterial 
+            color={new THREE.Color("#0EA5E9")}
+            transparent
+            opacity={0.7}
+          />
         </Sphere>
       ))}
     </>
@@ -60,11 +69,12 @@ export const AnimatedBanner = () => {
     <div className="h-[400px] w-full relative">
       <Canvas
         camera={{ position: [0, 0, 10], fov: 50 }}
-        className="bg-transparent"
+        gl={{ antialias: true, alpha: true }}
+        style={{ background: 'transparent' }}
       >
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} />
-        <AnimatedLine />
+        <Suspense fallback={null}>
+          <AnimatedLine />
+        </Suspense>
       </Canvas>
     </div>
   );
