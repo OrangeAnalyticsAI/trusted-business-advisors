@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { ArrowRight, FileText, Video, Table, Lock } from "lucide-react";
@@ -44,8 +45,8 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Navigation Options */}
-      <section className="py-12 border-y bg-background/50 backdrop-blur-sm">
+      {/* Navigation Options - Only visible on mobile */}
+      <section className="py-12 border-y bg-background/50 backdrop-blur-sm md:hidden">
         <div className="container">
           <div className="flex flex-wrap justify-center gap-8 sm:gap-16">
             {[
