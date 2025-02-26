@@ -1,25 +1,14 @@
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 
 function Scene() {
-  const [spheres] = useState<[number, number, number][]>([
-    [-2, 0, 0],
-    [0, 0, 0],
-    [2, 0, 0],
-  ]);
-
   return (
-    <group>
-      {spheres.map((position, index) => (
-        <mesh key={index} position={position}>
-          <sphereGeometry args={[0.5, 32, 32]} />
-          <meshStandardMaterial color="#4338ca" />
-        </mesh>
-      ))}
-    </group>
+    <mesh position={[0, 0, 0]}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshBasicMaterial color="#4338ca" />
+    </mesh>
   );
 }
 
@@ -59,27 +48,16 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
 export const AnimatedBanner = () => {
   return (
-    <div className="h-[400px] w-full relative bg-background/80">
+    <div className="h-[400px] w-full relative">
       <ErrorBoundary>
         <Suspense fallback={null}>
           <Canvas
-            gl={{
+            camera={{ position: [0, 0, 5] }}
+            gl={{ 
               antialias: true,
-              alpha: true,
-              preserveDrawingBuffer: true,
             }}
-            dpr={window.devicePixelRatio}
-            style={{ position: 'absolute' }}
           >
-            <ambientLight intensity={0.5} />
-            <pointLight position={[10, 10, 10]} />
             <Scene />
-            <OrbitControls 
-              enableZoom={false}
-              enablePan={false}
-              minPolarAngle={Math.PI / 2}
-              maxPolarAngle={Math.PI / 2}
-            />
           </Canvas>
         </Suspense>
       </ErrorBoundary>
