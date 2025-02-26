@@ -8,12 +8,16 @@ const AnimatedLine = () => {
   const sphereRef = useRef<THREE.Mesh>(null);
   const progress = useRef(0);
 
+  // Create a simple curve for the animation
   const curve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(-3, 0, 0),
     new THREE.Vector3(-1, 2, 0),
     new THREE.Vector3(1, -1, 0),
     new THREE.Vector3(3, 1, 0),
   ]);
+
+  // Get points for the line visualization
+  const points = curve.getPoints(50);
 
   useFrame(() => {
     if (!sphereRef.current) return;
@@ -23,21 +27,25 @@ const AnimatedLine = () => {
     sphereRef.current.position.copy(point);
   });
 
-  const points = curve.getPoints(50);
-  const lineGeometry = points;
-
   return (
     <>
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} />
       
-      <Line points={lineGeometry} color="white" lineWidth={1} />
+      {/* Render the curved line */}
+      <Line 
+        points={points.map(p => [p.x, p.y, p.z])} 
+        color="white" 
+        lineWidth={1}
+      />
       
+      {/* Animated sphere that follows the path */}
       <mesh ref={sphereRef}>
         <sphereGeometry args={[0.1, 16, 16]} />
         <meshBasicMaterial color="#0EA5E9" />
       </mesh>
 
+      {/* Static spheres around the path */}
       {[...Array(5)].map((_, i) => (
         <mesh
           key={i}
@@ -89,13 +97,20 @@ export const AnimatedBanner = () => {
     <div className="h-[400px] w-full">
       <ErrorBoundary>
         <Canvas
-          camera={{ position: [0, 0, 10], fov: 50 }}
+          camera={{ 
+            position: [0, 0, 10], 
+            fov: 50,
+            near: 0.1,
+            far: 1000
+          }}
           gl={{ 
             antialias: true,
             alpha: true,
-            powerPreference: "default"
+            powerPreference: "default",
+            preserveDrawingBuffer: true
           }}
           style={{ background: 'transparent' }}
+          dpr={[1, 2]} // Handle different pixel ratios
         >
           <Suspense fallback={null}>
             <AnimatedLine />
