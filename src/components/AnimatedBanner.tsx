@@ -1,17 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
-
-function Sphere({ position }: { position: [number, number, number] }) {
-  return (
-    <mesh position={position}>
-      <sphereGeometry args={[0.5, 32, 32]} />
-      <meshBasicMaterial color="#4338ca" />
-    </mesh>
-  );
-}
 
 function Scene() {
   const [spheres] = useState<[number, number, number][]>([
@@ -23,7 +14,10 @@ function Scene() {
   return (
     <group>
       {spheres.map((position, index) => (
-        <Sphere key={index} position={position} />
+        <mesh key={index} position={position}>
+          <sphereGeometry args={[0.5, 32, 32]} />
+          <meshStandardMaterial color="#4338ca" />
+        </mesh>
       ))}
     </group>
   );
@@ -67,26 +61,27 @@ export const AnimatedBanner = () => {
   return (
     <div className="h-[400px] w-full relative bg-background/80">
       <ErrorBoundary>
-        <Canvas
-          dpr={[1, 2]}
-          gl={{
-            antialias: true,
-            alpha: true,
-            powerPreference: 'high-performance',
-          }}
-        >
-          <color attach="background" args={['transparent']} />
-          <PerspectiveCamera makeDefault position={[0, 0, 10]} />
-          <ambientLight intensity={0.5} />
-          <pointLight position={[10, 10, 10]} />
-          <Scene />
-          <OrbitControls 
-            enableZoom={false}
-            enablePan={false}
-            minPolarAngle={Math.PI / 2}
-            maxPolarAngle={Math.PI / 2}
-          />
-        </Canvas>
+        <Suspense fallback={null}>
+          <Canvas
+            gl={{
+              antialias: true,
+              alpha: true,
+              preserveDrawingBuffer: true,
+            }}
+            dpr={window.devicePixelRatio}
+            style={{ position: 'absolute' }}
+          >
+            <ambientLight intensity={0.5} />
+            <pointLight position={[10, 10, 10]} />
+            <Scene />
+            <OrbitControls 
+              enableZoom={false}
+              enablePan={false}
+              minPolarAngle={Math.PI / 2}
+              maxPolarAngle={Math.PI / 2}
+            />
+          </Canvas>
+        </Suspense>
       </ErrorBoundary>
     </div>
   );
