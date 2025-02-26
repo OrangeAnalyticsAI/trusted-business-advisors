@@ -8,9 +8,24 @@ export default function Content() {
     <div className="min-h-screen">
       <Navbar />
       
-      <div className="container pt-32 pb-24">
-        <h1 className="text-4xl font-bold mb-12 text-center mt-8">Premium Business Content</h1>
-        
+      <section className="pt-16 pb-8 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary via-primary/20 to-background z-0 animate-[gradient_8s_ease_infinite]"></div>
+        <div className="absolute inset-0 bg-[linear-gradient(225deg,_#FFE29F_0%,_#FFA99F_48%,_#FF719A_100%)] opacity-20 dark:opacity-10 z-0"></div>
+        <div className="absolute inset-0 backdrop-blur-[120px] z-0"></div>
+        <div className="container relative z-10">
+          <div className="text-center animate-in">
+            <div className="relative inline-block">
+              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
+                Premium Business
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80"> Content</span>
+              </h1>
+              <div className="absolute -inset-x-6 -inset-y-4 bg-gradient-to-r from-primary/20 to-primary/0 blur-2xl -z-10 animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="container pb-24">
         {/* Video Content Section */}
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-6">Expert Video Resources</h2>
