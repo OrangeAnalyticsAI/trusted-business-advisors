@@ -2,13 +2,13 @@
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { ArrowRight, FileText, Video, Table, Lock } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export default function Index() {
   const handleConsultationClick = () => {
-    toast({
-      title: "Coming Soon",
+    toast("Coming Soon", {
       description: "Jen hasn't built this yet",
+      position: "top-center",
     });
   };
 

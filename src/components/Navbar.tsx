@@ -1,13 +1,13 @@
 
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/button";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export function Navbar() {
   const handleAuthClick = () => {
-    toast({
-      title: "Coming Soon",
+    toast("Coming Soon", {
       description: "Jen hasn't built this yet",
+      position: "top-center",
     });
   };
 
