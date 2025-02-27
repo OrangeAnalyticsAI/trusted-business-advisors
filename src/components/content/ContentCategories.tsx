@@ -71,7 +71,7 @@ export const ContentCategories = ({
     <Card className="p-4">
       <h3 className="text-sm font-semibold mb-3 flex items-center">
         <FileText className="h-4 w-4 mr-1" />
-        Categories
+        Format
       </h3>
       
       <div className={`flex flex-wrap gap-1 ${expanded ? '' : 'max-h-28 overflow-hidden'}`}>
@@ -103,7 +103,7 @@ export const ContentCategories = ({
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold flex items-center">
               <Tag className="h-4 w-4 mr-1" /> 
-              Topic Categories
+              Categories
             </h3>
             <button 
               onClick={() => setExpanded(!expanded)}
