@@ -23,3 +23,63 @@ export const generateUniqueFilename = (originalName: string): string => {
   
   return `${baseName}_${timestamp}_${randomString}.${extension}`;
 };
+
+// Helper to check if a file with the same name exists in content table
+export const fileExistsInContent = async (originalFilename: string): Promise<boolean> => {
+  const { data, error } = await supabase
+    .from('content')
+    .select('id, original_filename')
+    .eq('original_filename', originalFilename)
+    .limit(1);
+    
+  if (error) {
+    console.error("Error checking file existence:", error);
+    return false;
+  }
+  
+  return data && data.length > 0;
+};
+
+// Helper to replace a file in content table
+export const replaceContentFile = async (
+  originalFilename: string, 
+  newContentUrl: string, 
+  newThumbnailUrl: string | null,
+  contentType: string,
+  title: string,
+  description: string | null,
+  userId: string
+): Promise<boolean> => {
+  // First, get the existing content record
+  const { data: existingContent, error: fetchError } = await supabase
+    .from('content')
+    .select('*')
+    .eq('original_filename', originalFilename)
+    .limit(1)
+    .single();
+  
+  if (fetchError) {
+    console.error("Error fetching existing content:", fetchError);
+    return false;
+  }
+
+  // Now update the content record
+  const { error: updateError } = await supabase
+    .from('content')
+    .update({
+      content_url: newContentUrl,
+      thumbnail_url: newThumbnailUrl,
+      content_type: contentType,
+      title: title,
+      description: description,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', existingContent.id);
+  
+  if (updateError) {
+    console.error("Error updating content:", updateError);
+    return false;
+  }
+  
+  return true;
+};

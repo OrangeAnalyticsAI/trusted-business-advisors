@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
@@ -7,7 +6,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { SUPABASE_URL, supabase, storage, generateUniqueFilename } from "@/integrations/supabase/client";
+import { 
+  SUPABASE_URL, 
+  supabase, 
+  storage, 
+  fileExistsInContent,
+  replaceContentFile
+} from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface NewContent {
@@ -37,292 +42,158 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
   // Store file info when duplicate is detected
   const [existingFileInfo, setExistingFileInfo] = useState<{
     fileName: string;
-    fileExt: string;
     file: File;
-    bucket: string;
   } | null>(null);
 
-  // This function now checks both the storage and the database
-  const checkFileExistsAndUpload = async (file: File, bucketName: string) => {
-    const fileName = file.name;
-    const fileExt = fileName.split('.').pop() || '';
-    
-    console.log(`Checking if file exists: ${fileName} in bucket ${bucketName}`);
-    
-    // First check the database for original_filename
-    const { data: existingContent, error: dbError } = await supabase
-      .from('content')
-      .select('original_filename')
-      .eq('original_filename', fileName);
-      
-    if (dbError) {
-      console.error("Error checking database for existing filename:", dbError);
-    } else if (existingContent && existingContent.length > 0) {
-      console.log("File found in database:", existingContent);
-      setExistingFileInfo({
-        fileName,
-        fileExt,
-        file,
-        bucket: bucketName
-      });
-      setFileExistsDialog(true);
-      return { exists: true, fileName: null };
-    }
-    
-    // Then check the storage bucket
-    const { data: existingFiles, error: storageError } = await storage
-      .from(bucketName)
-      .list('', {
-        search: fileName
-      });
-    
-    if (storageError) {
-      console.error("Error checking for existing file in storage:", storageError);
-      throw new Error(`Failed to check if file exists: ${storageError.message}`);
-    }
-    
-    const fileExists = existingFiles && existingFiles.some(f => f.name === fileName);
-    
-    if (fileExists) {
-      console.log("File exists in storage but not in database, showing confirmation dialog");
-      setExistingFileInfo({
-        fileName,
-        fileExt,
-        file,
-        bucket: bucketName
-      });
-      setFileExistsDialog(true);
-      return { exists: true, fileName: null };
-    } else {
-      console.log("File does not exist, uploading directly");
-      // Upload the file directly using original filename
-      const { data, error: uploadError } = await storage
-        .from(bucketName)
-        .upload(fileName, file, { upsert: false });
-      
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        throw new Error(`Storage upload failed: ${uploadError.message}`);
-      }
-      
-      return { exists: false, fileName };
-    }
-  };
-  
-  const uploadFileWithOverwrite = async () => {
-    if (!existingFileInfo) return null;
-    
-    const { fileName, file, bucket } = existingFileInfo;
-    
-    // Use a modified filename to avoid collisions
-    const uniqueFileName = generateUniqueFilename(fileName);
-    
-    console.log(`Uploading file with unique name: ${uniqueFileName} (original: ${fileName})`);
-    
-    try {
-      // Upload with the unique filename
-      const { data, error: uploadError } = await storage
-        .from(bucket)
-        .upload(uniqueFileName, file);
-      
-      if (uploadError) {
-        console.error("Upload error with unique filename:", uploadError);
-        throw new Error(`Storage upload failed: ${uploadError.message}`);
-      }
-      
-      console.log("File uploaded successfully with unique name");
-      
-      // First, check if we have this file in the database
-      const { data: contentWithFileName, error: contentError } = await supabase
-        .from('content')
-        .select('id')
-        .eq('original_filename', fileName);
-      
-      if (contentError) {
-        console.error("Error checking content table:", contentError);
-      } else if (contentWithFileName && contentWithFileName.length > 0) {
-        console.log("File records found in database:", contentWithFileName);
-        // We'll let the finalizeContentSubmission function handle this
-      }
-      
-      // Get a list of all files with matching name to ensure we're removing the correct one
-      const { data: fileList, error: listError } = await storage
-        .from(bucket)
-        .list('', {
-          search: fileName
-        });
-      
-      if (listError) {
-        console.error("Error listing files for deletion:", listError);
-        // Continue despite error, as we at least have the new file uploaded
-      } else {
-        console.log("Files found for potential deletion:", fileList);
-        
-        // Find exact matches to delete
-        const exactMatches = fileList.filter(f => f.name === fileName);
-        
-        if (exactMatches.length > 0) {
-          // Delete all exact matches
-          const filesToRemove = exactMatches.map(f => f.name);
-          console.log("Attempting to delete these files:", filesToRemove);
-          
-          const { data: removeData, error: removeError } = await storage
-            .from(bucket)
-            .remove(filesToRemove);
-          
-          if (removeError) {
-            console.error("Error removing original file:", removeError);
-            // Continue despite error, as we at least have the new file uploaded
-          } else {
-            console.log("Original file removal result:", removeData);
-            console.log("Original file removed successfully");
-          }
-        } else {
-          console.log("No exact matches found for deletion");
-        }
-      }
-      
-      return uniqueFileName;
-    } catch (error) {
-      console.error("Error during file replacement:", error);
-      throw error;
-    }
-  };
-  
+  // Handle file replacement when a file with the same name is found
   const handleReplaceFile = async () => {
+    if (!existingFileInfo || !existingFileInfo.file) {
+      setFileExistsDialog(false);
+      return;
+    }
+
     try {
       setLoadingContent(true);
       
-      // If there's a content file to replace
-      let contentFileName = null;
-      if (existingFileInfo?.file === newContent.contentFile) {
-        contentFileName = await uploadFileWithOverwrite();
-        setExistingFileInfo(null);
-        setFileExistsDialog(false);
-        
-        // Check if we still need to handle the thumbnail
-        if (newContent.thumbnail) {
-          try {
-            const { exists, fileName } = await checkFileExistsAndUpload(newContent.thumbnail, 'thumbnails');
-            
-            if (exists) {
-              // We'll handle this in the next cycle
-              return;
-            }
-          } catch (error) {
-            console.error("Error checking thumbnail:", error);
-            // Continue without thumbnail
-          }
-        }
-        
-        // If we get here, we can finalize the content submission
-        await finalizeContentSubmission(contentFileName);
-      } 
-      // If there's a thumbnail to replace
-      else if (existingFileInfo?.file === newContent.thumbnail) {
-        const thumbnailFileName = await uploadFileWithOverwrite();
-        setExistingFileInfo(null);
-        setFileExistsDialog(false);
-        
-        // Now check and handle the content file
-        if (newContent.contentFile) {
-          try {
-            const { exists, fileName } = await checkFileExistsAndUpload(
-              newContent.contentFile, 
-              'content_files'
-            );
-            
-            if (exists) {
-              // We'll handle this in the next cycle
-              return;
-            }
-            
-            contentFileName = fileName;
-          } catch (error) {
-            console.error("Error uploading content file after thumbnail replacement:", error);
-            throw error;
-          }
-        }
-        
-        // If we get here, we can finalize
-        await finalizeContentSubmission(contentFileName);
-      }
-    } catch (error) {
-      console.error("Error replacing file:", error);
-      toast.error(`Error replacing file: ${error.message || 'Unknown error'}`);
-      setFileExistsDialog(false);
-    } finally {
-      setLoadingContent(false);
-    }
-  };
-  
-  const finalizeContentSubmission = async (contentFileName: string) => {
-    try {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        toast.error("You must be logged in to add content");
+        toast.error("You must be logged in to replace content");
+        setFileExistsDialog(false);
         return;
       }
+
+      // First, get the existing record by original filename
+      const fileName = existingFileInfo.file.name;
+      const { data: existingContent, error: fetchError } = await supabase
+        .from('content')
+        .select('id, content_url, thumbnail_url')
+        .eq('original_filename', fileName)
+        .limit(1)
+        .single();
       
-      // Get the public URL for the uploaded file
-      const { data: { publicUrl } } = storage
+      if (fetchError) {
+        console.error("Error fetching existing content:", fetchError);
+        throw new Error(`Failed to fetch existing content: ${fetchError.message}`);
+      }
+      
+      // Extract the file paths from the content_url and thumbnail_url
+      const contentFilePath = existingContent.content_url 
+        ? new URL(existingContent.content_url).pathname.split('/').pop() 
+        : null;
+        
+      const thumbnailFilePath = existingContent.thumbnail_url 
+        ? new URL(existingContent.thumbnail_url).pathname.split('/').pop() 
+        : null;
+
+      // Upload the new content file with the same filename in storage
+      const { data: uploadData, error: uploadError } = await storage
         .from('content_files')
-        .getPublicUrl(contentFileName);
-      
-      // If we have a thumbnail, upload that too
-      let thumbnailUrl = null;
-      let thumbnailFileName = null;
-      
-      if (newContent.thumbnail) {
-        try {
-          // Check if thumbnail exists and upload
-          const { exists, fileName } = await checkFileExistsAndUpload(newContent.thumbnail, 'thumbnails');
+        .upload(fileName, existingFileInfo.file, { upsert: true });
+        
+      if (uploadError) {
+        console.error("Error uploading new file:", uploadError);
+
+        // If the error is not that the file already exists, throw an error
+        if (uploadError.message !== 'The resource already exists') {
+          throw new Error(`Upload failed: ${uploadError.message}`);
+        }
+        
+        // If it's because the file exists, delete it first and then upload
+        const { data: removeData, error: removeError } = await storage
+          .from('content_files')
+          .remove([fileName]);
           
-          if (exists) {
-            // If thumbnail exists but we're here, it means we need to wait for user confirmation
-            // This will be handled in the next cycle after user clicks "Replace"
-            return;
-          }
+        if (removeError) {
+          console.error("Error removing existing file:", removeError);
+          throw new Error(`Failed to remove existing file: ${removeError.message}`);
+        }
+        
+        // Try upload again after deletion
+        const { data: retryData, error: retryError } = await storage
+          .from('content_files')
+          .upload(fileName, existingFileInfo.file, { upsert: false });
           
-          thumbnailFileName = fileName;
-          
-          if (thumbnailFileName) {
-            const { data: { publicUrl: thumbPublicUrl } } = storage
-              .from('thumbnails')
-              .getPublicUrl(thumbnailFileName);
-            
-            thumbnailUrl = thumbPublicUrl;
-          }
-        } catch (thumbError) {
-          console.warn("Thumbnail upload error:", thumbError);
-          // Continue without thumbnail
+        if (retryError) {
+          console.error("Error re-uploading file:", retryError);
+          throw new Error(`Re-upload failed: ${retryError.message}`);
         }
       }
       
-      // Save the content metadata to the database
-      const { data: contentData, error: contentError } = await supabase
+      // Get the public URL for content
+      const { data: { publicUrl: contentUrl } } = storage
+        .from('content_files')
+        .getPublicUrl(fileName);
+        
+      // Handle thumbnail if it exists
+      let thumbnailUrl = null;
+      if (newContent.thumbnail) {
+        const thumbnailName = newContent.thumbnail.name;
+        
+        try {
+          // Delete existing thumbnail if it exists
+          if (thumbnailFilePath) {
+            await storage
+              .from('thumbnails')
+              .remove([thumbnailFilePath]);
+          }
+          
+          // Upload new thumbnail
+          const { data: thumbData, error: thumbError } = await storage
+            .from('thumbnails')
+            .upload(thumbnailName, newContent.thumbnail, { upsert: true });
+            
+          if (thumbError && thumbError.message === 'The resource already exists') {
+            // Remove and retry if thumbnail exists
+            await storage
+              .from('thumbnails')
+              .remove([thumbnailName]);
+              
+            await storage
+              .from('thumbnails')
+              .upload(thumbnailName, newContent.thumbnail, { upsert: false });
+          } else if (thumbError) {
+            console.error("Thumbnail upload error:", thumbError);
+            // Continue without thumbnail
+          }
+          
+          // Get thumbnail URL
+          const { data: { publicUrl: thumbPublicUrl } } = storage
+            .from('thumbnails')
+            .getPublicUrl(thumbnailName);
+            
+          thumbnailUrl = thumbPublicUrl;
+        } catch (thumbError) {
+          console.warn("Thumbnail handling error:", thumbError);
+          // Continue without thumbnail
+        }
+      } else if (existingContent.thumbnail_url) {
+        // Keep the existing thumbnail if no new one
+        thumbnailUrl = existingContent.thumbnail_url;
+      }
+
+      // Update the content record
+      const { error: updateError } = await supabase
         .from('content')
-        .insert({
+        .update({
+          content_url: contentUrl,
+          thumbnail_url: thumbnailUrl,
+          content_type: newContent.content_type,
           title: newContent.title,
           description: newContent.description || null,
-          content_type: newContent.content_type,
-          content_url: publicUrl,
-          thumbnail_url: thumbnailUrl,
-          created_by: user.id,
-          original_filename: contentFileName // Using original filename
+          updated_at: new Date().toISOString()
         })
-        .select()
-        .single();
+        .eq('id', existingContent.id);
         
-      if (contentError) {
-        console.error("Content database insertion error:", contentError);
-        throw new Error(`Failed to save content metadata: ${contentError.message}`);
+      if (updateError) {
+        console.error("Content update error:", updateError);
+        throw new Error(`Failed to update content: ${updateError.message}`);
       }
       
-      console.log("Content metadata saved:", contentData);
+      toast.success("Content replaced successfully");
+      onContentAdded();
       
-      toast.success("Content added successfully");
+      // Reset state
       setNewContent({
         title: "",
         description: "",
@@ -330,11 +201,15 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
         contentFile: null,
         thumbnail: null
       });
+      setFileExistsDialog(false);
       setDialogOpen(false);
-      onContentAdded();
+      
     } catch (error) {
-      console.error("Error finalizing content submission:", error);
-      throw error;
+      console.error("File replacement error:", error);
+      toast.error(`Error replacing file: ${error.message || 'Unknown error'}`);
+    } finally {
+      setLoadingContent(false);
+      setFileExistsDialog(false);
     }
   };
 
@@ -349,25 +224,161 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
     try {
       setLoadingContent(true);
       
-      // Check if content file exists and upload if it doesn't
-      const { exists, fileName } = await checkFileExistsAndUpload(newContent.contentFile, 'content_files');
+      // Check if a file with the same name exists
+      const fileName = newContent.contentFile.name;
+      const fileExists = await fileExistsInContent(fileName);
       
-      if (exists) {
-        // If file exists, we're waiting for user confirmation
-        // The dialog is already shown by checkFileExistsAndUpload
+      if (fileExists) {
+        // Show confirmation dialog for replacement
+        setExistingFileInfo({
+          fileName,
+          file: newContent.contentFile
+        });
+        setFileExistsDialog(true);
         return;
       }
       
-      // If we get here, file was uploaded successfully and doesn't exist
-      if (fileName) {
-        await finalizeContentSubmission(fileName);
-      }
+      // If file doesn't exist, continue with normal upload
+      await uploadNewContent();
       
     } catch (error) {
       console.error("Content submission error:", error);
       toast.error(`Error adding content: ${error.message || 'Unknown error'}`);
     } finally {
       setLoadingContent(false);
+    }
+  };
+  
+  const uploadNewContent = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("You must be logged in to add content");
+        return;
+      }
+      
+      if (!newContent.contentFile) {
+        toast.error("Content file is required");
+        return;
+      }
+      
+      // Upload content file with original filename
+      const fileName = newContent.contentFile.name;
+      
+      let contentUrl;
+      try {
+        const { data: uploadData, error: uploadError } = await storage
+          .from('content_files')
+          .upload(fileName, newContent.contentFile, { upsert: false });
+          
+        if (uploadError) {
+          if (uploadError.message === 'The resource already exists') {
+            // If it exists, remove it first then re-upload
+            const { error: removeError } = await storage
+              .from('content_files')
+              .remove([fileName]);
+              
+            if (removeError) {
+              throw new Error(`Failed to remove existing file: ${removeError.message}`);
+            }
+            
+            // Re-upload
+            const { error: retryError } = await storage
+              .from('content_files')
+              .upload(fileName, newContent.contentFile, { upsert: false });
+              
+            if (retryError) {
+              throw new Error(`Re-upload failed: ${retryError.message}`);
+            }
+          } else {
+            throw new Error(`Upload failed: ${uploadError.message}`);
+          }
+        }
+        
+        // Get public URL
+        const { data: { publicUrl } } = storage
+          .from('content_files')
+          .getPublicUrl(fileName);
+          
+        contentUrl = publicUrl;
+      } catch (error) {
+        console.error("Content file upload error:", error);
+        throw error;
+      }
+      
+      // Handle thumbnail if it exists
+      let thumbnailUrl = null;
+      if (newContent.thumbnail) {
+        try {
+          const thumbnailName = newContent.thumbnail.name;
+          
+          // Check if thumbnail exists and handle similarly
+          const { data: thumbData, error: thumbError } = await storage
+            .from('thumbnails')
+            .upload(thumbnailName, newContent.thumbnail, { upsert: false });
+            
+          if (thumbError && thumbError.message === 'The resource already exists') {
+            // Remove and retry if thumbnail exists
+            await storage
+              .from('thumbnails')
+              .remove([thumbnailName]);
+              
+            await storage
+              .from('thumbnails')
+              .upload(thumbnailName, newContent.thumbnail, { upsert: false });
+          } else if (thumbError) {
+            throw new Error(`Thumbnail upload failed: ${thumbError.message}`);
+          }
+          
+          // Get thumbnail URL
+          const { data: { publicUrl: thumbUrl } } = storage
+            .from('thumbnails')
+            .getPublicUrl(thumbnailName);
+            
+          thumbnailUrl = thumbUrl;
+        } catch (thumbError) {
+          console.warn("Thumbnail upload error:", thumbError);
+          // Continue without thumbnail
+        }
+      }
+      
+      // Insert content record with original filename
+      const { data: contentData, error: contentError } = await supabase
+        .from('content')
+        .insert({
+          title: newContent.title,
+          description: newContent.description || null,
+          content_type: newContent.content_type,
+          content_url: contentUrl,
+          thumbnail_url: thumbnailUrl,
+          created_by: user.id,
+          original_filename: fileName
+        })
+        .select()
+        .single();
+        
+      if (contentError) {
+        console.error("Content database insertion error:", contentError);
+        throw new Error(`Failed to save content metadata: ${contentError.message}`);
+      }
+      
+      toast.success("Content added successfully");
+      onContentAdded();
+      
+      // Reset form
+      setNewContent({
+        title: "",
+        description: "",
+        content_type: "video",
+        contentFile: null,
+        thumbnail: null
+      });
+      setDialogOpen(false);
+      
+    } catch (error) {
+      console.error("Error uploading new content:", error);
+      throw error;
     }
   };
 
