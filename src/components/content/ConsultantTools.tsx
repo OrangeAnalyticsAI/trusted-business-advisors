@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { SUPABASE_URL, supabase } from "@/integrations/supabase/client";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface NewContent {
   title: string;
@@ -24,6 +25,7 @@ interface ConsultantToolsProps {
 export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loadingContent, setLoadingContent] = useState(false);
+  const [fileExistsDialog, setFileExistsDialog] = useState(false);
   const [newContent, setNewContent] = useState<NewContent>({
     title: "",
     description: "",
@@ -31,6 +33,181 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
     contentFile: null,
     thumbnail: null
   });
+
+  // Store file info when duplicate is detected
+  const [existingFileInfo, setExistingFileInfo] = useState<{
+    fileName: string;
+    fileExt: string;
+    file: File;
+  } | null>(null);
+
+  const checkFileExistsAndUpload = async (file: File, bucketName: string) => {
+    const fileName = file.name;
+    const fileExt = fileName.split('.').pop() || '';
+    
+    console.log(`Checking if file exists: ${fileName} in bucket ${bucketName}`);
+    
+    // Check if file exists
+    const { data: existingFile, error: checkError } = await supabase.storage
+      .from(bucketName)
+      .list('', {
+        search: fileName
+      });
+    
+    if (checkError) {
+      console.error("Error checking for existing file:", checkError);
+      throw new Error(`Failed to check if file exists: ${checkError.message}`);
+    }
+    
+    const fileExists = existingFile.some(f => f.name === fileName);
+    
+    if (fileExists) {
+      console.log("File exists, showing confirmation dialog");
+      setExistingFileInfo({
+        fileName,
+        fileExt,
+        file
+      });
+      setFileExistsDialog(true);
+      return { exists: true, fileName: null };
+    } else {
+      console.log("File does not exist, uploading directly");
+      // Upload the file directly using original filename
+      const { data, error: uploadError } = await supabase.storage
+        .from(bucketName)
+        .upload(fileName, file, { upsert: false });
+      
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw new Error(`Storage upload failed: ${uploadError.message}`);
+      }
+      
+      return { exists: false, fileName };
+    }
+  };
+  
+  const uploadFileWithOverwrite = async () => {
+    if (!existingFileInfo) return null;
+    
+    const { fileName, file } = existingFileInfo;
+    const bucketName = file === newContent.contentFile ? 'content_files' : 'thumbnails';
+    
+    console.log(`Overwriting file: ${fileName} in bucket ${bucketName}`);
+    
+    // Upload with upsert: true to overwrite
+    const { data, error: uploadError } = await supabase.storage
+      .from(bucketName)
+      .upload(fileName, file, { upsert: true });
+    
+    if (uploadError) {
+      console.error("Upload error during overwrite:", uploadError);
+      throw new Error(`Storage overwrite failed: ${uploadError.message}`);
+    }
+    
+    console.log("File overwritten successfully");
+    setFileExistsDialog(false);
+    return fileName;
+  };
+  
+  const handleReplaceFile = async () => {
+    try {
+      setLoadingContent(true);
+      
+      // Upload content file with overwrite
+      const contentFileName = await uploadFileWithOverwrite();
+      
+      if (contentFileName) {
+        await finalizeContentSubmission(contentFileName);
+      }
+    } catch (error) {
+      console.error("Error replacing file:", error);
+      toast.error(`Error replacing file: ${error.message || 'Unknown error'}`);
+    } finally {
+      setLoadingContent(false);
+    }
+  };
+  
+  const finalizeContentSubmission = async (contentFileName: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("You must be logged in to add content");
+        return;
+      }
+      
+      // Get the public URL for the uploaded file
+      const { data: { publicUrl } } = supabase.storage
+        .from('content_files')
+        .getPublicUrl(contentFileName);
+      
+      // If we have a thumbnail, upload that too
+      let thumbnailUrl = null;
+      let thumbnailFileName = null;
+      
+      if (newContent.thumbnail) {
+        try {
+          // Check if thumbnail exists and upload
+          const { exists, fileName } = await checkFileExistsAndUpload(newContent.thumbnail, 'thumbnails');
+          
+          if (exists) {
+            // If thumbnail exists but we're here, it means we need to wait for user confirmation
+            // This will be handled in the next cycle after user clicks "Replace"
+            return;
+          }
+          
+          thumbnailFileName = fileName;
+          
+          if (thumbnailFileName) {
+            const { data: { publicUrl: thumbPublicUrl } } = supabase.storage
+              .from('thumbnails')
+              .getPublicUrl(thumbnailFileName);
+            
+            thumbnailUrl = thumbPublicUrl;
+          }
+        } catch (thumbError) {
+          console.warn("Thumbnail upload error:", thumbError);
+          // Continue without thumbnail
+        }
+      }
+      
+      // Save the content metadata to the database
+      const { data: contentData, error: contentError } = await supabase
+        .from('content')
+        .insert({
+          title: newContent.title,
+          description: newContent.description || null,
+          content_type: newContent.content_type,
+          content_url: publicUrl,
+          thumbnail_url: thumbnailUrl,
+          created_by: user.id,
+          original_filename: contentFileName // Using original filename
+        })
+        .select()
+        .single();
+        
+      if (contentError) {
+        console.error("Content database insertion error:", contentError);
+        throw new Error(`Failed to save content metadata: ${contentError.message}`);
+      }
+      
+      console.log("Content metadata saved:", contentData);
+      
+      toast.success("Content added successfully");
+      setNewContent({
+        title: "",
+        description: "",
+        content_type: "video",
+        contentFile: null,
+        thumbnail: null
+      });
+      setDialogOpen(false);
+      onContentAdded();
+    } catch (error) {
+      console.error("Error finalizing content submission:", error);
+      throw error;
+    }
+  };
 
   const handleSubmitContent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,158 +220,20 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
     try {
       setLoadingContent(true);
       
-      const { data: { user } } = await supabase.auth.getUser();
+      // Check if content file exists and upload if it doesn't
+      const { exists, fileName } = await checkFileExistsAndUpload(newContent.contentFile, 'content_files');
       
-      if (!user) {
-        toast.error("You must be logged in to add content");
+      if (exists) {
+        // If file exists, we're waiting for user confirmation
+        // The dialog is already shown by checkFileExistsAndUpload
         return;
       }
-
-      // Get the current session token - needed for authorization
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("No active session found");
-        return;
-      }
-
-      console.log("Preparing to upload content with file:", newContent.contentFile.name);
       
-      // Attempt a simpler approach - upload directly to Supabase Storage
-      try {
-        // First try to upload the content file directly via the client
-        const fileExt = newContent.contentFile.name.split('.').pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        const originalFilename = newContent.contentFile.name;
-        
-        console.log("Uploading content file directly to Supabase Storage:", fileName);
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('content_files')
-          .upload(fileName, newContent.contentFile);
-        
-        if (uploadError) {
-          console.error("Direct storage upload error:", uploadError);
-          throw new Error(`Storage upload failed: ${uploadError.message}`);
-        }
-        
-        console.log("File uploaded successfully:", uploadData);
-        
-        // Get the public URL for the uploaded file
-        const { data: { publicUrl } } = supabase.storage
-          .from('content_files')
-          .getPublicUrl(fileName);
-        
-        console.log("File public URL:", publicUrl);
-        
-        // If we have a thumbnail, upload that too
-        let thumbnailUrl = null;
-        if (newContent.thumbnail) {
-          const thumbExt = newContent.thumbnail.name.split('.').pop();
-          const thumbName = `${crypto.randomUUID()}.${thumbExt}`;
-          
-          const { data: thumbData, error: thumbError } = await supabase.storage
-            .from('thumbnails')
-            .upload(thumbName, newContent.thumbnail);
-            
-          if (thumbError) {
-            console.warn("Thumbnail upload error:", thumbError);
-            // Continue without thumbnail
-          } else {
-            const { data: { publicUrl: thumbPublicUrl } } = supabase.storage
-              .from('thumbnails')
-              .getPublicUrl(thumbName);
-              
-            thumbnailUrl = thumbPublicUrl;
-          }
-        }
-        
-        // Save the content metadata to the database
-        const { data: contentData, error: contentError } = await supabase
-          .from('content')
-          .insert({
-            title: newContent.title,
-            description: newContent.description || null,
-            content_type: newContent.content_type,
-            content_url: publicUrl,
-            thumbnail_url: thumbnailUrl,
-            created_by: user.id,
-            original_filename: originalFilename
-          })
-          .select()
-          .single();
-          
-        if (contentError) {
-          console.error("Content database insertion error:", contentError);
-          throw new Error(`Failed to save content metadata: ${contentError.message}`);
-        }
-        
-        console.log("Content metadata saved:", contentData);
-        
-        toast.success("Content added successfully");
-        setNewContent({
-          title: "",
-          description: "",
-          content_type: "video",
-          contentFile: null,
-          thumbnail: null
-        });
-        setDialogOpen(false);
-        onContentAdded();
-        return;
-      } catch (storageError) {
-        console.error("Direct storage approach failed:", storageError);
-        console.log("Falling back to edge function approach...");
-        // Continue with the edge function approach as a fallback
+      // If we get here, file was uploaded successfully and doesn't exist
+      if (fileName) {
+        await finalizeContentSubmission(fileName);
       }
       
-      // Edge function approach as fallback
-      const formData = new FormData();
-      formData.append('contentFile', newContent.contentFile);
-      if (newContent.thumbnail) {
-        formData.append('thumbnail', newContent.thumbnail);
-      }
-      formData.append('title', newContent.title);
-      formData.append('description', newContent.description || '');
-      formData.append('contentType', newContent.content_type);
-      formData.append('originalFilename', newContent.contentFile.name);
-
-      console.log("Sending request to Edge Function with access token and user ID");
-      
-      try {
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/upload-content`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'x-user-id': user.id
-          },
-          body: formData
-        });
-
-        console.log("Response status:", response.status);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Error response from edge function:", errorText);
-          throw new Error(`Edge function error: ${response.status} - ${errorText || 'Unknown error'}`);
-        }
-        
-        const result = await response.json();
-        console.log("Response data:", result);
-
-        toast.success("Content added successfully");
-        setNewContent({
-          title: "",
-          description: "",
-          content_type: "video",
-          contentFile: null,
-          thumbnail: null
-        });
-        setDialogOpen(false);
-        onContentAdded();
-      } catch (fetchError) {
-        console.error("Fetch error with edge function:", fetchError);
-        throw new Error(`Edge function fetch error: ${fetchError.message}`);
-      }
     } catch (error) {
       console.error("Content submission error:", error);
       toast.error(`Error adding content: ${error.message || 'Unknown error'}`);
@@ -294,6 +333,29 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
             </form>
           </DialogContent>
         </Dialog>
+        
+        <AlertDialog open={fileExistsDialog} onOpenChange={setFileExistsDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>File Already Exists</AlertDialogTitle>
+              <AlertDialogDescription>
+                A file with the name "{existingFileInfo?.fileName}" already exists. 
+                Would you like to replace it?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => {
+                setFileExistsDialog(false);
+                setLoadingContent(false);
+              }}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleReplaceFile}>
+                Replace Existing File
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Card>
   );
