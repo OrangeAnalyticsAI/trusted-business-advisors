@@ -26,6 +26,8 @@ export const NoContentFound = ({ searchQuery, selectedCategory, isConsultant }: 
             <li>Your file size is reasonable (under 100MB)</li>
             <li>You're connected to the internet</li>
             <li>You've filled out all required fields</li>
+            <li>The Edge Function is properly deployed and configured</li>
+            <li>Your Supabase project has the correct storage buckets created</li>
           </ul>
         </div>
       )}

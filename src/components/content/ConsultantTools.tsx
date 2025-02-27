@@ -59,6 +59,93 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
 
       console.log("Preparing to upload content with file:", newContent.contentFile.name);
       
+      // Attempt a simpler approach - upload directly to Supabase Storage
+      try {
+        // First try to upload the content file directly via the client
+        const fileExt = newContent.contentFile.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        
+        console.log("Uploading content file directly to Supabase Storage:", fileName);
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('content_files')
+          .upload(fileName, newContent.contentFile);
+        
+        if (uploadError) {
+          console.error("Direct storage upload error:", uploadError);
+          throw new Error(`Storage upload failed: ${uploadError.message}`);
+        }
+        
+        console.log("File uploaded successfully:", uploadData);
+        
+        // Get the public URL for the uploaded file
+        const { data: { publicUrl } } = supabase.storage
+          .from('content_files')
+          .getPublicUrl(fileName);
+        
+        console.log("File public URL:", publicUrl);
+        
+        // If we have a thumbnail, upload that too
+        let thumbnailUrl = null;
+        if (newContent.thumbnail) {
+          const thumbExt = newContent.thumbnail.name.split('.').pop();
+          const thumbName = `${crypto.randomUUID()}.${thumbExt}`;
+          
+          const { data: thumbData, error: thumbError } = await supabase.storage
+            .from('thumbnails')
+            .upload(thumbName, newContent.thumbnail);
+            
+          if (thumbError) {
+            console.warn("Thumbnail upload error:", thumbError);
+            // Continue without thumbnail
+          } else {
+            const { data: { publicUrl: thumbPublicUrl } } = supabase.storage
+              .from('thumbnails')
+              .getPublicUrl(thumbName);
+              
+            thumbnailUrl = thumbPublicUrl;
+          }
+        }
+        
+        // Save the content metadata to the database
+        const { data: contentData, error: contentError } = await supabase
+          .from('content')
+          .insert({
+            title: newContent.title,
+            description: newContent.description || null,
+            content_type: newContent.content_type,
+            content_url: publicUrl,
+            thumbnail_url: thumbnailUrl,
+            created_by: user.id
+          })
+          .select()
+          .single();
+          
+        if (contentError) {
+          console.error("Content database insertion error:", contentError);
+          throw new Error(`Failed to save content metadata: ${contentError.message}`);
+        }
+        
+        console.log("Content metadata saved:", contentData);
+        
+        toast.success("Content added successfully");
+        setNewContent({
+          title: "",
+          description: "",
+          content_type: "video",
+          contentFile: null,
+          thumbnail: null
+        });
+        setDialogOpen(false);
+        onContentAdded();
+        return;
+      } catch (storageError) {
+        console.error("Direct storage approach failed:", storageError);
+        console.log("Falling back to edge function approach...");
+        // Continue with the edge function approach as a fallback
+      }
+      
+      // Edge function approach as fallback
       const formData = new FormData();
       formData.append('contentFile', newContent.contentFile);
       if (newContent.thumbnail) {
@@ -70,37 +157,44 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
 
       console.log("Sending request to Edge Function with access token and user ID");
       
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/upload-content`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'x-user-id': user.id
-        },
-        body: formData
-      });
+      try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/upload-content`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'x-user-id': user.id
+          },
+          body: formData
+        });
 
-      console.log("Response status:", response.status);
-      
-      const result = await response.json();
-      console.log("Response data:", result);
+        console.log("Response status:", response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Error response from edge function:", errorText);
+          throw new Error(`Edge function error: ${response.status} - ${errorText || 'Unknown error'}`);
+        }
+        
+        const result = await response.json();
+        console.log("Response data:", result);
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to upload content');
+        toast.success("Content added successfully");
+        setNewContent({
+          title: "",
+          description: "",
+          content_type: "video",
+          contentFile: null,
+          thumbnail: null
+        });
+        setDialogOpen(false);
+        onContentAdded();
+      } catch (fetchError) {
+        console.error("Fetch error with edge function:", fetchError);
+        throw new Error(`Edge function fetch error: ${fetchError.message}`);
       }
-
-      toast.success("Content added successfully");
-      setNewContent({
-        title: "",
-        description: "",
-        content_type: "video",
-        contentFile: null,
-        thumbnail: null
-      });
-      setDialogOpen(false);
-      onContentAdded();
     } catch (error) {
       console.error("Content submission error:", error);
-      toast.error("Error adding content");
+      toast.error(`Error adding content: ${error.message || 'Unknown error'}`);
     } finally {
       setLoadingContent(false);
     }
