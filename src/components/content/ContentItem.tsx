@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { FileText, Video, Table, Presentation, FileType, Trash2, Download, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -177,12 +178,12 @@ export const ContentItem = ({
 
   return (
     <Card key={id} className="overflow-hidden flex flex-col">
-      <div className="aspect-[5/3] bg-muted relative flex items-center justify-center">
+      <div className="aspect-[5/3] bg-muted relative flex items-center justify-center overflow-hidden">
         {thumbnail_url ? (
           <img 
             src={thumbnail_url} 
             alt={title} 
-            className="w-full h-full object-cover" 
+            className="w-full h-full object-cover absolute inset-0" 
           />
         ) : (
           <Icon className="h-12 w-12 text-muted-foreground" />
