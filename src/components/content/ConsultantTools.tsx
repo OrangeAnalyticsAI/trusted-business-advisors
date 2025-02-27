@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2, Upload, Link } from "lucide-react";
@@ -37,7 +36,6 @@ interface NewContent {
   contentFile: File | null;
   contentUrl: string;
   thumbnail: File | null;
-  thumbnailUrl: string;
   categories: string[];
   uploadType: 'file' | 'url';
 }
@@ -59,7 +57,6 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
     contentFile: null,
     contentUrl: "",
     thumbnail: null,
-    thumbnailUrl: "",
     categories: [],
     uploadType: 'file'
   });
@@ -263,11 +260,31 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
         return;
       }
 
+      // Handle thumbnail upload if it exists
+      let thumbnailUrl = null;
+      if (newContent.thumbnail) {
+        const thumbnailName = newContent.thumbnail.name;
+        
+        const { url: thumbUrl, error: thumbUploadError } = await uploadFileToStorage(
+          THUMBNAILS_BUCKET, 
+          thumbnailName, 
+          newContent.thumbnail,
+          true // Enable upsert to replace existing thumbnail
+        );
+        
+        if (thumbUploadError) {
+          console.warn("Thumbnail upload error:", thumbUploadError);
+          // Continue without thumbnail
+        } else {
+          thumbnailUrl = thumbUrl;
+        }
+      }
+
       // Update the content record with new info
       const updateSuccess = await replaceUrlContent(
         existingUrlInfo.contentId,
         newContent.contentUrl,
-        newContent.thumbnailUrl || null,
+        thumbnailUrl,
         newContent.content_type,
         newContent.title,
         newContent.description || null,
@@ -305,7 +322,6 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
       contentFile: null,
       contentUrl: "",
       thumbnail: null,
-      thumbnailUrl: "",
       categories: [],
       uploadType: 'file'
     });
@@ -490,6 +506,25 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
         toast.error("You must be logged in to add content");
         return;
       }
+
+      // Handle thumbnail upload if it exists
+      let thumbnailUrl = null;
+      if (newContent.thumbnail) {
+        const thumbnailName = newContent.thumbnail.name;
+        
+        const { url: thumbUrl, error: thumbUploadError } = await uploadFileToStorage(
+          THUMBNAILS_BUCKET, 
+          thumbnailName, 
+          newContent.thumbnail
+        );
+        
+        if (thumbUploadError) {
+          console.warn("Thumbnail upload error:", thumbUploadError);
+          // Continue without thumbnail
+        } else {
+          thumbnailUrl = thumbUrl;
+        }
+      }
       
       // Add the URL-based content to the database
       const { id, error } = await addUrlContent(
@@ -497,7 +532,7 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
         newContent.title,
         newContent.description || null,
         newContent.content_type,
-        newContent.thumbnailUrl || null,
+        thumbnailUrl,
         user.id,
         newContent.categories
       );
@@ -601,16 +636,15 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
                         </p>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="thumbnail-url">Thumbnail URL (optional)</Label>
+                        <Label htmlFor="thumbnail">Thumbnail Image (optional)</Label>
                         <Input
-                          id="thumbnail-url"
-                          type="url"
-                          placeholder="https://example.com/thumbnail.jpg"
-                          value={newContent.thumbnailUrl}
-                          onChange={(e) => setNewContent({...newContent, thumbnailUrl: e.target.value})}
+                          id="thumbnail"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setNewContent({...newContent, thumbnail: e.target.files?.[0] || null})}
                         />
                         <p className="text-xs text-muted-foreground">
-                          Optionally provide a URL to an image that represents this content.
+                          Upload an image that represents this content.
                         </p>
                       </div>
                     </div>
