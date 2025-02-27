@@ -8,19 +8,30 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
+    console.log("Upload content function called")
     const formData = await req.formData()
     const contentFile = formData.get('contentFile')
     const thumbnail = formData.get('thumbnail')
     const title = formData.get('title')
     const description = formData.get('description')
     const contentType = formData.get('contentType')
+    
+    console.log("Received data:", { 
+      title, 
+      description, 
+      contentType, 
+      contentFile: contentFile ? "File present" : "No file", 
+      thumbnail: thumbnail ? "Thumbnail present" : "No thumbnail" 
+    })
 
     if (!contentFile || !title || !contentType) {
+      console.error("Required fields missing", { contentFile: !!contentFile, title: !!title, contentType: !!contentType })
       return new Response(
         JSON.stringify({ error: 'Required fields missing' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -34,6 +45,8 @@ serve(async (req) => {
 
     // Upload content file
     const contentFileName = `${crypto.randomUUID()}.${contentFile.name.split('.').pop()}`
+    console.log("Uploading content file:", contentFileName)
+    
     const { data: contentData, error: contentError } = await supabase.storage
       .from('content_files')
       .upload(contentFileName, contentFile, {
@@ -42,6 +55,7 @@ serve(async (req) => {
       })
 
     if (contentError) {
+      console.error("Content file upload error:", contentError)
       return new Response(
         JSON.stringify({ error: 'Failed to upload content file', details: contentError }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
@@ -52,6 +66,8 @@ serve(async (req) => {
     if (thumbnail) {
       // Upload thumbnail if provided
       const thumbnailName = `${crypto.randomUUID()}.${thumbnail.name.split('.').pop()}`
+      console.log("Uploading thumbnail:", thumbnailName)
+      
       const { data: thumbData, error: thumbError } = await supabase.storage
         .from('thumbnails')
         .upload(thumbnailName, thumbnail, {
@@ -81,6 +97,8 @@ serve(async (req) => {
       thumbnailUrl = thumbUrl
     }
 
+    console.log("Got public URLs:", { contentUrl, thumbnailUrl })
+
     // Insert the content record
     const { data: content, error: dbError } = await supabase
       .from('content')
@@ -96,12 +114,14 @@ serve(async (req) => {
       .single()
 
     if (dbError) {
+      console.error("Database error when saving content metadata:", dbError)
       return new Response(
         JSON.stringify({ error: 'Failed to save content metadata', details: dbError }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       )
     }
 
+    console.log("Content uploaded successfully:", content)
     return new Response(
       JSON.stringify({ 
         message: 'Content uploaded successfully',
@@ -110,6 +130,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
   } catch (error) {
+    console.error("Unexpected error in upload-content function:", error)
     return new Response(
       JSON.stringify({ error: 'An unexpected error occurred', details: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
