@@ -76,8 +76,10 @@ export default function Content() {
             console.error("Error fetching profile:", profileError);
             toast.error("Error fetching user profile");
           } else if (profileData) {
+            console.log("User profile:", profileData);
             setUserProfile(profileData);
             setIsConsultant(profileData.user_type === 'consultant');
+            console.log("Is consultant:", profileData.user_type === 'consultant');
           }
           
           // Load content
@@ -383,6 +385,13 @@ export default function Content() {
               </div>
             ) : (
               <>
+                {/* Debug information - temporarily added for testing */}
+                <div className="mb-4 p-4 bg-muted/30 rounded-lg">
+                  <h3 className="font-semibold mb-2">Debug Info:</h3>
+                  <p>Consultant Status: {isConsultant ? 'Yes' : 'No'}</p>
+                  <p>User Type: {userProfile?.user_type || 'Not loaded'}</p>
+                </div>
+
                 {/* Dynamic content from database */}
                 {contentItems.length > 0 && (
                   <section className="mb-12">
