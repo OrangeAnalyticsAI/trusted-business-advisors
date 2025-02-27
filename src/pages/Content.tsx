@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { FileText, Video, Table, Search, Loader2 } from "lucide-react";
+import { FileText, Video, Table, Search, Loader2, Upload, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase, SUPABASE_URL } from "@/integrations/supabase/client";
@@ -208,6 +208,37 @@ export default function Content() {
                   ))}
                 </div>
               </Card>
+              
+              {isConsultant && (
+                <Card className="p-4">
+                  <h3 className="text-sm font-semibold mb-3">Consultant Tools</h3>
+                  <div className="space-y-3">
+                    <Button 
+                      variant="default" 
+                      className="w-full flex items-center gap-2" 
+                      onClick={() => {
+                        window.location.href = `${SUPABASE_URL}/storage/object/upload/content-files`;
+                      }}
+                    >
+                      <Upload className="h-4 w-4" />
+                      Upload Content
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full flex items-center gap-2" 
+                      onClick={fetchContent}
+                      disabled={loadingContent}
+                    >
+                      {loadingContent ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Plus className="h-4 w-4" />
+                      )}
+                      Load Content
+                    </Button>
+                  </div>
+                </Card>
+              )}
               
               <Card className="p-4">
                 <h3 className="text-sm font-semibold mb-3">Popular Resources</h3>
