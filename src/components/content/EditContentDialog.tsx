@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase, generateUniqueFilename, THUMBNAILS_BUCKET } from "@/integrations/supabase/client";
 import { FileImage, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Category {
   id: string;
@@ -266,52 +267,40 @@ export function EditContentDialog({
               className="hidden"
             />
             
-            {thumbnailPreview ? (
-              <div className="relative aspect-[5/3] bg-muted rounded-md overflow-hidden mb-2">
-                <img 
-                  src={thumbnailPreview} 
-                  alt="Thumbnail preview" 
-                  className="w-full h-full object-cover"
-                />
-                <Button 
-                  type="button" 
-                  variant="destructive" 
-                  size="icon" 
-                  className="absolute top-2 right-2 h-8 w-8 rounded-full"
-                  onClick={clearThumbnail}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <div className="aspect-[5/3] bg-muted rounded-md flex items-center justify-center mb-2">
-                <FileImage className="h-12 w-12 text-muted-foreground" />
-              </div>
-            )}
-            
             <Button
               type="button"
               variant="outline"
               onClick={handleBrowseClick}
               className="w-full"
             >
-              {thumbnailPreview ? "Change Thumbnail" : "Upload Thumbnail"}
+              {thumbnailFile ? "Change Thumbnail" : "Change Thumbnail"}
             </Button>
+            {thumbnailFile && (
+              <div className="text-xs text-muted-foreground mt-1">
+                New thumbnail selected: {thumbnailFile.name}
+              </div>
+            )}
           </div>
           
           <div className="space-y-2">
             <Label>Categories</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-2 border rounded-md p-3 max-h-40 overflow-y-auto">
               {availableCategories.map((category) => (
-                <Button
-                  key={category.id}
-                  type="button"
-                  variant={selectedCategories.includes(category.id) ? "default" : "outline"}
-                  className="w-full"
-                  onClick={() => handleCategoryToggle(category.id)}
-                >
-                  {category.name}
-                </Button>
+                <div key={category.id} className="flex items-center space-x-2">
+                  <Checkbox 
+                    id={`category-${category.id}`} 
+                    checked={selectedCategories.includes(category.id)}
+                    onCheckedChange={(checked) => 
+                      handleCategoryToggle(category.id)
+                    }
+                  />
+                  <label 
+                    htmlFor={`category-${category.id}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    {category.name}
+                  </label>
+                </div>
               ))}
             </div>
           </div>
