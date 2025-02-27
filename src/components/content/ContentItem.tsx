@@ -46,10 +46,34 @@ export const ContentItem = ({
       // Create a temporary anchor element
       const link = document.createElement('a');
       link.href = content_url;
-      link.download = original_filename; // Set the original filename for the download
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      
+      // Instead of just setting the download attribute, we need to actually
+      // fetch the file and use the Blob API to trigger the download with the proper name
+      fetch(content_url)
+        .then(response => response.blob())
+        .then(blob => {
+          // Create a blob URL for the file
+          const blobUrl = URL.createObjectURL(blob);
+          
+          // Update the link to use the blob URL
+          link.href = blobUrl;
+          
+          // Set the download attribute with the original filename
+          link.download = original_filename;
+          
+          // Append to the body, click, then remove
+          document.body.appendChild(link);
+          link.click();
+          
+          // Clean up
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        })
+        .catch(error => {
+          console.error('Error downloading file:', error);
+          // Fallback to original behavior
+          window.open(content_url, '_blank');
+        });
     } else {
       // Fall back to normal behavior if no original filename
       window.open(content_url, '_blank');
