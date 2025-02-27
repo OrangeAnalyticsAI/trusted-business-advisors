@@ -62,7 +62,7 @@ export default function Index() {
                   });
                 } : undefined}
               >
-                {link.icon && <link.icon className="h-4 w-4" />}
+                {link.icon && <link.icon className="h-4 w-4 my-auto" />}
                 {link.label}
               </a>
             ))}

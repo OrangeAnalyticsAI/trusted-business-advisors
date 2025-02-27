@@ -51,7 +51,7 @@ export function Navbar() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6 ml-[220px]">
           <div className="hidden md:flex gap-6">
-            <a href="/" className="text-muted-foreground hover:text-primary transition-colors">
+            <a href="/" className="text-muted-foreground hover:text-primary transition-colors flex items-center">
               <Home className="h-4 w-4" />
             </a>
             <a href="/content" className="text-muted-foreground hover:text-primary transition-colors">
