@@ -17,6 +17,7 @@ interface ContentItem {
   created_at: string;
   updated_at: string;
   created_by: string;
+  original_filename?: string;
 }
 
 interface UserProfile {
@@ -162,4 +163,4 @@ export default function Content() {
       </div>
     </div>
   );
-}
+};

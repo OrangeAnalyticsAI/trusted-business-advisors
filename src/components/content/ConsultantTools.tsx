@@ -64,6 +64,7 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
         // First try to upload the content file directly via the client
         const fileExt = newContent.contentFile.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const originalFilename = newContent.contentFile.name;
         
         console.log("Uploading content file directly to Supabase Storage:", fileName);
         
@@ -116,7 +117,8 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
             content_type: newContent.content_type,
             content_url: publicUrl,
             thumbnail_url: thumbnailUrl,
-            created_by: user.id
+            created_by: user.id,
+            original_filename: originalFilename
           })
           .select()
           .single();
@@ -154,6 +156,7 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
       formData.append('title', newContent.title);
       formData.append('description', newContent.description || '');
       formData.append('contentType', newContent.content_type);
+      formData.append('originalFilename', newContent.contentFile.name);
 
       console.log("Sending request to Edge Function with access token and user ID");
       
