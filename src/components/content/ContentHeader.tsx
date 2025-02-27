@@ -16,6 +16,9 @@ export const ContentHeader = () => {
             </h1>
             <div className="absolute -inset-x-6 -inset-y-4 bg-gradient-to-r from-primary/20 to-primary/0 blur-2xl -z-10 animate-pulse"></div>
           </div>
+          <p className="mt-4 text-base text-muted-foreground">
+            Expert insights and handpicked resources, carefully curated for you
+          </p>
         </div>
       </div>
     </section>
