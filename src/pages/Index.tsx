@@ -44,7 +44,8 @@ export default function Index() {
         <div className="container">
           <div className="flex flex-wrap justify-center gap-8 sm:gap-16">
             {[
-              { href: "/content", label: "Content", icon: Home },
+              { href: "/", label: "", icon: Home },
+              { href: "/content", label: "Content", icon: null },
               { href: "/pricing", label: "Pricing", icon: null },
               { href: "#consultation", label: "Book a consultation", icon: null },
               { href: "/about", label: "About", icon: null }
@@ -53,6 +54,13 @@ export default function Index() {
                 key={i}
                 href={link.href}
                 className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
+                onClick={link.href === "#consultation" ? (e) => {
+                  e.preventDefault();
+                  toast("Coming Soon", {
+                    description: "Jen hasn't built this yet",
+                    position: "top-center",
+                  });
+                } : undefined}
               >
                 {link.icon && <link.icon className="h-4 w-4" />}
                 {link.label}

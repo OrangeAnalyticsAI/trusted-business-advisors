@@ -145,17 +145,23 @@ export default function Content() {
     try {
       setLoadingContent(true);
       
+      // Get the current authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("You must be logged in to add content");
+        return;
+      }
+      
       const { data, error } = await supabase
         .from('content')
-        .insert([
-          {
-            title: newContent.title,
-            description: newContent.description,
-            content_type: newContent.content_type,
-            content_url: newContent.content_url,
-            // Use created_by automatically via RLS
-          }
-        ])
+        .insert({
+          title: newContent.title,
+          description: newContent.description,
+          content_type: newContent.content_type,
+          content_url: newContent.content_url,
+          created_by: user.id,
+        })
         .select();
         
       if (error) {
