@@ -1,19 +1,23 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Upload, Link } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   SUPABASE_URL, 
   supabase, 
   storage, 
   fileExistsInContent,
+  urlExistsInContent,
   replaceContentFile,
+  addUrlContent,
+  replaceUrlContent,
   CONTENT_FILES_BUCKET,
   THUMBNAILS_BUCKET,
   uploadFileToStorage,
@@ -31,8 +35,11 @@ interface NewContent {
   description: string;
   content_type: string;
   contentFile: File | null;
+  contentUrl: string;
   thumbnail: File | null;
+  thumbnailUrl: string;
   categories: string[];
+  uploadType: 'file' | 'url';
 }
 
 interface ConsultantToolsProps {
@@ -43,20 +50,30 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loadingContent, setLoadingContent] = useState(false);
   const [fileExistsDialog, setFileExistsDialog] = useState(false);
+  const [urlExistsDialog, setUrlExistsDialog] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [newContent, setNewContent] = useState<NewContent>({
     title: "",
     description: "",
     content_type: "video",
     contentFile: null,
+    contentUrl: "",
     thumbnail: null,
-    categories: []
+    thumbnailUrl: "",
+    categories: [],
+    uploadType: 'file'
   });
 
   // Store file info when duplicate is detected
   const [existingFileInfo, setExistingFileInfo] = useState<{
     fileName: string;
     file: File;
+  } | null>(null);
+
+  // Store URL info when duplicate is detected
+  const [existingUrlInfo, setExistingUrlInfo] = useState<{
+    url: string;
+    contentId: string;
   } | null>(null);
 
   // Fetch categories when component mounts
@@ -215,14 +232,7 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
       onContentAdded();
       
       // Reset state
-      setNewContent({
-        title: "",
-        description: "",
-        content_type: "video",
-        contentFile: null,
-        thumbnail: null,
-        categories: []
-      });
+      resetForm();
       setFileExistsDialog(false);
       setDialogOpen(false);
       
@@ -235,33 +245,134 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
     }
   };
 
+  // Handle URL replacement when the same URL is found
+  const handleReplaceUrl = async () => {
+    if (!existingUrlInfo) {
+      setUrlExistsDialog(false);
+      return;
+    }
+
+    try {
+      setLoadingContent(true);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("You must be logged in to replace content");
+        setUrlExistsDialog(false);
+        return;
+      }
+
+      // Update the content record with new info
+      const updateSuccess = await replaceUrlContent(
+        existingUrlInfo.contentId,
+        newContent.contentUrl,
+        newContent.thumbnailUrl || null,
+        newContent.content_type,
+        newContent.title,
+        newContent.description || null,
+        newContent.categories
+      );
+      
+      if (!updateSuccess) {
+        toast.error("Failed to update content metadata");
+        setUrlExistsDialog(false);
+        return;
+      }
+      
+      toast.success("Content updated successfully");
+      onContentAdded();
+      
+      // Reset state
+      resetForm();
+      setUrlExistsDialog(false);
+      setDialogOpen(false);
+      
+    } catch (error) {
+      console.error("URL replacement error:", error);
+      toast.error(`Error updating content: ${error.message || 'Unknown error'}`);
+    } finally {
+      setLoadingContent(false);
+      setUrlExistsDialog(false);
+    }
+  };
+
+  const resetForm = () => {
+    setNewContent({
+      title: "",
+      description: "",
+      content_type: "video",
+      contentFile: null,
+      contentUrl: "",
+      thumbnail: null,
+      thumbnailUrl: "",
+      categories: [],
+      uploadType: 'file'
+    });
+  };
+
   const handleSubmitContent = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newContent.title || !newContent.content_type || !newContent.contentFile) {
-      toast.error("Title, content type, and file are required");
+    if (!newContent.title || !newContent.content_type) {
+      toast.error("Title and content type are required");
+      return;
+    }
+
+    // Validate based on upload type
+    if (newContent.uploadType === 'file' && !newContent.contentFile) {
+      toast.error("Please select a file to upload");
+      return;
+    }
+
+    if (newContent.uploadType === 'url' && !newContent.contentUrl) {
+      toast.error("Please enter a URL");
       return;
     }
     
     try {
       setLoadingContent(true);
       
-      // Check if a file with the same name exists
-      const fileName = newContent.contentFile.name;
-      const fileExists = await fileExistsInContent(fileName);
-      
-      if (fileExists) {
-        // Show confirmation dialog for replacement
-        setExistingFileInfo({
-          fileName,
-          file: newContent.contentFile
-        });
-        setFileExistsDialog(true);
-        return;
+      // Handle file upload
+      if (newContent.uploadType === 'file') {
+        // Check if a file with the same name exists
+        const fileName = newContent.contentFile!.name;
+        const fileExists = await fileExistsInContent(fileName);
+        
+        if (fileExists) {
+          // Show confirmation dialog for replacement
+          setExistingFileInfo({
+            fileName,
+            file: newContent.contentFile!
+          });
+          setFileExistsDialog(true);
+          return;
+        }
+        
+        // If file doesn't exist, continue with normal upload
+        await uploadNewFileContent();
+      } else {
+        // URL content handling
+        // First, check if the URL already exists in our content
+        const { data } = await supabase
+          .from('content')
+          .select('id')
+          .eq('content_url', newContent.contentUrl)
+          .limit(1);
+          
+        if (data && data.length > 0) {
+          // URL already exists, ask for confirmation to replace
+          setExistingUrlInfo({
+            url: newContent.contentUrl,
+            contentId: data[0].id
+          });
+          setUrlExistsDialog(true);
+          return;
+        }
+        
+        // If URL doesn't exist, add as new content
+        await addNewUrlContent();
       }
-      
-      // If file doesn't exist, continue with normal upload
-      await uploadNewContent();
       
     } catch (error) {
       console.error("Content submission error:", error);
@@ -271,7 +382,7 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
     }
   };
   
-  const uploadNewContent = async () => {
+  const uploadNewFileContent = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -329,7 +440,8 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
           content_url: contentUrl,
           thumbnail_url: thumbnailUrl,
           created_by: user.id,
-          original_filename: fileName
+          original_filename: fileName,
+          is_external_url: false
         })
         .select()
         .single();
@@ -361,18 +473,49 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
       onContentAdded();
       
       // Reset form
-      setNewContent({
-        title: "",
-        description: "",
-        content_type: "video",
-        contentFile: null,
-        thumbnail: null,
-        categories: []
-      });
+      resetForm();
       setDialogOpen(false);
       
     } catch (error) {
       console.error("Error uploading new content:", error);
+      throw error;
+    }
+  };
+
+  const addNewUrlContent = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("You must be logged in to add content");
+        return;
+      }
+      
+      // Add the URL-based content to the database
+      const { id, error } = await addUrlContent(
+        newContent.contentUrl,
+        newContent.title,
+        newContent.description || null,
+        newContent.content_type,
+        newContent.thumbnailUrl || null,
+        user.id,
+        newContent.categories
+      );
+      
+      if (error) {
+        toast.error(`Failed to add URL content: ${error.message}`);
+        return;
+      }
+      
+      toast.success("URL content added successfully");
+      onContentAdded();
+      
+      // Reset form
+      resetForm();
+      setDialogOpen(false);
+      
+    } catch (error) {
+      console.error("Error adding URL content:", error);
       throw error;
     }
   };
@@ -399,7 +542,81 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
                   Add premium business content for your clients.
                 </DialogDescription>
               </DialogHeader>
+              
               <div className="grid gap-4 py-4">
+                <Tabs 
+                  defaultValue="file" 
+                  value={newContent.uploadType}
+                  onValueChange={(value) => setNewContent({...newContent, uploadType: value as 'file' | 'url'})}
+                  className="w-full"
+                >
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="file" className="flex items-center gap-2">
+                      <Upload className="h-4 w-4" />
+                      Upload File
+                    </TabsTrigger>
+                    <TabsTrigger value="url" className="flex items-center gap-2">
+                      <Link className="h-4 w-4" />
+                      Add URL Link
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="file" className="mt-4">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="content-file">Content File</Label>
+                        <Input
+                          id="content-file"
+                          type="file"
+                          onChange={(e) => setNewContent({...newContent, contentFile: e.target.files?.[0] || null})}
+                          required={newContent.uploadType === 'file'}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="thumbnail">Thumbnail Image (optional)</Label>
+                        <Input
+                          id="thumbnail"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setNewContent({...newContent, thumbnail: e.target.files?.[0] || null})}
+                        />
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="url" className="mt-4">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="content-url">Content URL</Label>
+                        <Input
+                          id="content-url"
+                          type="url"
+                          placeholder="https://example.com/resource"
+                          value={newContent.contentUrl}
+                          onChange={(e) => setNewContent({...newContent, contentUrl: e.target.value})}
+                          required={newContent.uploadType === 'url'}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Enter the direct URL to the content. This should be a link to a document, video, or other resource.
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="thumbnail-url">Thumbnail URL (optional)</Label>
+                        <Input
+                          id="thumbnail-url"
+                          type="url"
+                          placeholder="https://example.com/thumbnail.jpg"
+                          value={newContent.thumbnailUrl}
+                          onChange={(e) => setNewContent({...newContent, thumbnailUrl: e.target.value})}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Optionally provide a URL to an image that represents this content.
+                        </p>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+                
                 <div className="space-y-2">
                   <Label htmlFor="title">Title</Label>
                   <Input
@@ -433,24 +650,6 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
                     <option value="presentation">Presentation</option>
                     <option value="report">Report</option>
                   </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="content-file">Content File</Label>
-                  <Input
-                    id="content-file"
-                    type="file"
-                    onChange={(e) => setNewContent({...newContent, contentFile: e.target.files?.[0] || null})}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="thumbnail">Thumbnail Image (optional)</Label>
-                  <Input
-                    id="thumbnail"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setNewContent({...newContent, thumbnail: e.target.files?.[0] || null})}
-                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Categories</Label>
@@ -509,6 +708,29 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
               </AlertDialogCancel>
               <AlertDialogAction onClick={handleReplaceFile}>
                 Replace Existing File
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        
+        <AlertDialog open={urlExistsDialog} onOpenChange={setUrlExistsDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>URL Content Already Exists</AlertDialogTitle>
+              <AlertDialogDescription>
+                Content with the URL "{newContent.contentUrl}" already exists. 
+                Would you like to update it?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => {
+                setUrlExistsDialog(false);
+                setLoadingContent(false);
+              }}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleReplaceUrl}>
+                Update Existing Content
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

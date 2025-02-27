@@ -44,6 +44,22 @@ export const fileExistsInContent = async (originalFilename: string): Promise<boo
   return data && data.length > 0;
 };
 
+// Helper to check if URL content already exists in content table
+export const urlExistsInContent = async (url: string): Promise<boolean> => {
+  const { data, error } = await supabase
+    .from('content')
+    .select('id, content_url')
+    .eq('content_url', url)
+    .limit(1);
+    
+  if (error) {
+    console.error("Error checking URL existence:", error);
+    return false;
+  }
+  
+  return data && data.length > 0;
+};
+
 // Helper to remove a file from storage
 export const removeFileFromStorage = async (
   bucketName: string,
@@ -113,6 +129,125 @@ export const uploadFileToStorage = async (
   }
 };
 
+// Helper to add URL-based content
+export const addUrlContent = async (
+  contentUrl: string,
+  title: string,
+  description: string | null,
+  contentType: string,
+  thumbnailUrl: string | null,
+  userId: string,
+  categories: string[] = []
+): Promise<{ id: string | null; error: Error | null }> => {
+  try {
+    // Insert content record
+    const { data: contentData, error: contentError } = await supabase
+      .from('content')
+      .insert({
+        title: title,
+        description: description || null,
+        content_type: contentType,
+        content_url: contentUrl,
+        thumbnail_url: thumbnailUrl,
+        created_by: userId,
+        is_external_url: true
+      })
+      .select()
+      .single();
+      
+    if (contentError) {
+      console.error("Content database insertion error:", contentError);
+      return { id: null, error: new Error(`Failed to save content metadata: ${contentError.message}`) };
+    }
+    
+    // Now add the categories if any are selected
+    if (categories.length > 0) {
+      const categoryMappings = categories.map(categoryId => ({
+        content_id: contentData.id,
+        category_id: categoryId
+      }));
+      
+      const { error: categoriesError } = await supabase
+        .from('content_categories')
+        .insert(categoryMappings);
+        
+      if (categoriesError) {
+        console.error("Error adding categories:", categoriesError);
+        // Continue anyway, we've at least added the content
+      }
+    }
+    
+    return { id: contentData.id, error: null };
+  } catch (err) {
+    return { id: null, error: err instanceof Error ? err : new Error('Unknown error adding URL content') };
+  }
+};
+
+// Helper to replace URL content
+export const replaceUrlContent = async (
+  existingContentId: string,
+  newContentUrl: string, 
+  newThumbnailUrl: string | null,
+  contentType: string,
+  title: string,
+  description: string | null,
+  categories: string[] = []
+): Promise<boolean> => {
+  try {
+    // Update the content record
+    const { error: updateError } = await supabase
+      .from('content')
+      .update({
+        content_url: newContentUrl,
+        thumbnail_url: newThumbnailUrl,
+        content_type: contentType,
+        title: title,
+        description: description,
+        updated_at: new Date().toISOString(),
+        is_external_url: true
+      })
+      .eq('id', existingContentId);
+    
+    if (updateError) {
+      console.error("Error updating content:", updateError);
+      return false;
+    }
+    
+    // Delete existing category associations
+    const { error: deleteError } = await supabase
+      .from('content_categories')
+      .delete()
+      .eq('content_id', existingContentId);
+      
+    if (deleteError) {
+      console.error("Error deleting existing categories:", deleteError);
+      // Continue anyway to add new categories
+    }
+    
+    // Add new category associations if any
+    if (categories.length > 0) {
+      const categoryMappings = categories.map(categoryId => ({
+        content_id: existingContentId,
+        category_id: categoryId
+      }));
+      
+      const { error: insertError } = await supabase
+        .from('content_categories')
+        .insert(categoryMappings);
+        
+      if (insertError) {
+        console.error("Error adding categories:", insertError);
+        // Continue anyway, we've at least updated the content
+      }
+    }
+    
+    return true;
+  } catch (err) {
+    console.error("Error replacing URL content:", err);
+    return false;
+  }
+};
+
 // Helper to replace a file in content table
 export const replaceContentFile = async (
   originalFilename: string, 
@@ -145,7 +280,8 @@ export const replaceContentFile = async (
       content_type: contentType,
       title: title,
       description: description,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      is_external_url: false
     })
     .eq('id', existingContent.id);
   

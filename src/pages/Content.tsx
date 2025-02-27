@@ -18,6 +18,7 @@ interface ContentItem {
   updated_at: string;
   created_by: string;
   original_filename?: string;
+  is_external_url?: boolean;
 }
 
 interface UserProfile {
