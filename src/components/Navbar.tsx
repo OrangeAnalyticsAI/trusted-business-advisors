@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase, SUPABASE_URL } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Home, Upload, Loader2 } from "lucide-react";
+import { Home, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -155,91 +155,6 @@ export function Navbar() {
             <a href="/content" className="text-muted-foreground hover:text-primary transition-colors">
               Content
             </a>
-            {isConsultant && (
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="text-muted-foreground hover:text-primary transition-colors">
-                    <Upload className="h-4 w-4 mr-2" /> Load Content
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <form onSubmit={handleSubmitContent}>
-                    <DialogHeader>
-                      <DialogTitle>Add New Content</DialogTitle>
-                      <DialogDescription>
-                        Add premium business content for your clients.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="title">Title</Label>
-                        <Input
-                          id="title"
-                          value={newContent.title}
-                          onChange={(e) => setNewContent({...newContent, title: e.target.value})}
-                          placeholder="e.g. Business Strategy Guide"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="description">Description</Label>
-                        <Input
-                          id="description"
-                          value={newContent.description}
-                          onChange={(e) => setNewContent({...newContent, description: e.target.value})}
-                          placeholder="Brief description of the content"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="content-type">Content Type</Label>
-                        <select
-                          id="content-type"
-                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          value={newContent.content_type}
-                          onChange={(e) => setNewContent({...newContent, content_type: e.target.value})}
-                        >
-                          <option value="video">Video</option>
-                          <option value="document">Document</option>
-                          <option value="spreadsheet">Spreadsheet</option>
-                          <option value="presentation">Presentation</option>
-                          <option value="report">Report</option>
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="content-file">Content File</Label>
-                        <Input
-                          id="content-file"
-                          type="file"
-                          onChange={(e) => setNewContent({...newContent, contentFile: e.target.files?.[0] || null})}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="thumbnail">Thumbnail Image (optional)</Label>
-                        <Input
-                          id="thumbnail"
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => setNewContent({...newContent, thumbnail: e.target.files?.[0] || null})}
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button type="submit" disabled={loadingContent}>
-                        {loadingContent ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Adding...
-                          </>
-                        ) : (
-                          'Add Content'
-                        )}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            )}
             <a href="/pricing" className="text-muted-foreground hover:text-primary transition-colors">
               Pricing
             </a>
