@@ -158,6 +158,7 @@ export default function Content() {
             isConsultant={isConsultant}
             searchQuery={searchQuery}
             selectedCategory={selectedCategory}
+            onContentDeleted={fetchContent}
           />
         </div>
       </div>

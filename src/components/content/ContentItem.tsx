@@ -1,8 +1,10 @@
 
 import { Card } from "@/components/ui/card";
-import { FileText, Video, Table, Presentation, FileType } from "lucide-react";
+import { FileText, Video, Table, Presentation, FileType, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 interface ContentItemProps {
   id: string;
@@ -12,6 +14,8 @@ interface ContentItemProps {
   content_url?: string;
   thumbnail_url?: string;
   original_filename?: string;
+  isConsultant?: boolean;
+  onDelete?: () => void;
 }
 
 export const ContentItem = ({
@@ -22,7 +26,11 @@ export const ContentItem = ({
   content_url,
   thumbnail_url,
   original_filename,
+  isConsultant = false,
+  onDelete,
 }: ContentItemProps) => {
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   const getContentIcon = (type: string) => {
     switch (type) {
       case 'video':
@@ -44,48 +52,82 @@ export const ContentItem = ({
     if (!content_url) return;
     
     if (original_filename) {
-      // Use XMLHttpRequest with responseType 'blob' to force download with proper filename
-      const xhr = new XMLHttpRequest();
-      xhr.open('GET', content_url, true);
-      xhr.responseType = 'blob';
+      // Create a temporary anchor element
+      const link = document.createElement('a');
+      link.href = content_url;
       
-      xhr.onload = function() {
-        if (xhr.status === 200) {
-          // Create blob link to download
-          const blob = new Blob([xhr.response], { type: xhr.getResponseHeader('content-type') });
-          const url = window.URL.createObjectURL(blob);
-          
-          // Create temp link
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = original_filename;
-          
-          // Append to html
-          document.body.appendChild(link);
-          
-          // Force download
-          link.click();
-          
-          // Clean up and remove the link
-          link.parentNode?.removeChild(link);
-          window.URL.revokeObjectURL(url);
-          
-          toast.success(`Downloading ${original_filename}`);
-        } else {
-          toast.error("Download failed");
-          window.open(content_url, '_blank');
-        }
-      };
+      // Set the download attribute with the original filename
+      link.setAttribute('download', original_filename);
       
-      xhr.onerror = function() {
-        toast.error("Download failed");
-        window.open(content_url, '_blank');
-      };
+      // Append, click, then remove
+      document.body.appendChild(link);
+      link.click();
       
-      xhr.send();
+      // Clean up
+      document.body.removeChild(link);
+      
+      // Show success toast
+      toast.success(`Downloading ${original_filename}`);
     } else {
       // Fall back to normal behavior if no original filename
       window.open(content_url, '_blank');
+    }
+  };
+  
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this content?")) return;
+    
+    try {
+      setIsDeleting(true);
+      
+      // Extract the file path from the content_url
+      const contentUrlPath = content_url ? new URL(content_url).pathname.split('/').pop() : null;
+      const thumbnailUrlPath = thumbnail_url ? new URL(thumbnail_url).pathname.split('/').pop() : null;
+      
+      // Delete from the database first
+      const { error: dbError } = await supabase
+        .from('content')
+        .delete()
+        .eq('id', id);
+      
+      if (dbError) {
+        throw new Error(`Error deleting from database: ${dbError.message}`);
+      }
+      
+      // Delete files from storage if they exist
+      if (contentUrlPath) {
+        const { error: contentError } = await supabase.storage
+          .from('content_files')
+          .remove([contentUrlPath]);
+          
+        if (contentError) {
+          console.error('Error deleting content file:', contentError);
+          // Continue even if file deletion fails
+        }
+      }
+      
+      if (thumbnailUrlPath) {
+        const { error: thumbnailError } = await supabase.storage
+          .from('thumbnails')
+          .remove([thumbnailUrlPath]);
+          
+        if (thumbnailError) {
+          console.error('Error deleting thumbnail:', thumbnailError);
+          // Continue even if thumbnail deletion fails
+        }
+      }
+      
+      toast.success("Content deleted successfully");
+      
+      // Call onDelete callback if provided
+      if (onDelete) {
+        onDelete();
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error(`Delete failed: ${error.message}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -106,7 +148,7 @@ export const ContentItem = ({
         <h3 className="font-semibold mb-2">{title}</h3>
         <p className="text-muted-foreground text-sm">{description}</p>
         {content_url && (
-          <div className="mt-4">
+          <div className="mt-4 flex items-center gap-2">
             <Button 
               variant="outline" 
               className="text-primary text-sm gap-2"
@@ -114,6 +156,18 @@ export const ContentItem = ({
             >
               {original_filename ? 'Download' : 'View'} {original_filename ? '(' + original_filename + ')' : ''}
             </Button>
+            
+            {isConsultant && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="text-destructive hover:bg-destructive/10"
+                onClick={handleDelete}
+                disabled={isDeleting}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         )}
       </div>

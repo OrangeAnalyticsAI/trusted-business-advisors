@@ -15,6 +15,7 @@ interface ContentItem {
   created_at: string;
   updated_at: string;
   created_by: string;
+  original_filename?: string;
 }
 
 interface UserProfile {
@@ -31,6 +32,7 @@ interface ContentMainAreaProps {
   isConsultant: boolean;
   searchQuery: string;
   selectedCategory: string;
+  onContentDeleted?: () => void;
 }
 
 export const ContentMainArea = ({
@@ -40,6 +42,7 @@ export const ContentMainArea = ({
   isConsultant,
   searchQuery,
   selectedCategory,
+  onContentDeleted,
 }: ContentMainAreaProps) => {
   return (
     <div className="lg:col-span-3">
@@ -52,7 +55,12 @@ export const ContentMainArea = ({
           <DebugInfo userProfile={userProfile} isConsultant={isConsultant} />
         
           {contentItems.length > 0 && (
-            <ContentItemsGrid items={contentItems} title="Recent Uploads" />
+            <ContentItemsGrid 
+              items={contentItems} 
+              title="Recent Uploads" 
+              isConsultant={isConsultant}
+              onDelete={onContentDeleted}
+            />
           )}
 
           {!loading && contentItems.length === 0 && (

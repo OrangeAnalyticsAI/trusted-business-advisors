@@ -11,14 +11,17 @@ interface ContentItemData {
   created_at: string;
   updated_at: string;
   created_by: string;
+  original_filename?: string;
 }
 
 interface ContentItemsGridProps {
   items: ContentItemData[];
   title?: string;
+  isConsultant?: boolean;
+  onDelete?: () => void;
 }
 
-export const ContentItemsGrid = ({ items, title }: ContentItemsGridProps) => {
+export const ContentItemsGrid = ({ items, title, isConsultant = false, onDelete }: ContentItemsGridProps) => {
   if (!items || items.length === 0) return null;
   
   return (
@@ -34,6 +37,9 @@ export const ContentItemsGrid = ({ items, title }: ContentItemsGridProps) => {
             content_type={item.content_type}
             content_url={item.content_url}
             thumbnail_url={item.thumbnail_url}
+            original_filename={item.original_filename}
+            isConsultant={isConsultant}
+            onDelete={onDelete}
           />
         ))}
       </div>
