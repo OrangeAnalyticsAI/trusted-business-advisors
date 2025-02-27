@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { SUPABASE_URL, supabase } from "@/integrations/supabase/client";
+import { SUPABASE_URL, supabase, generateUniqueFilename } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface NewContent {
@@ -93,33 +93,37 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
     
     const { fileName, file, bucket } = existingFileInfo;
     
-    console.log(`Replacing file: ${fileName} in bucket ${bucket}`);
+    // Instead of trying to overwrite directly, use a modified filename to avoid collisions
+    const uniqueFileName = generateUniqueFilename(fileName);
+    
+    console.log(`Uploading file with unique name: ${uniqueFileName} (original: ${fileName})`);
     
     try {
-      // First, remove the existing file
+      // Upload with the unique filename
+      const { data, error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(uniqueFileName, file);
+      
+      if (uploadError) {
+        console.error("Upload error with unique filename:", uploadError);
+        throw new Error(`Storage upload failed: ${uploadError.message}`);
+      }
+      
+      console.log("File uploaded successfully with unique name");
+      
+      // After successful upload with the unique name, delete the old file
       const { error: removeError } = await supabase.storage
         .from(bucket)
         .remove([fileName]);
       
       if (removeError) {
-        console.error("Error removing existing file:", removeError);
-        throw new Error(`Failed to remove existing file: ${removeError.message}`);
+        console.error("Error removing original file (but new file was uploaded):", removeError);
+        // Continue despite error, as we at least have the new file uploaded
+      } else {
+        console.log("Original file removed successfully");
       }
       
-      console.log("Existing file removed successfully");
-      
-      // Now upload the new file
-      const { data, error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, file);
-      
-      if (uploadError) {
-        console.error("Upload error during replacement:", uploadError);
-        throw new Error(`Storage replacement failed: ${uploadError.message}`);
-      }
-      
-      console.log("File replaced successfully");
-      return fileName;
+      return uniqueFileName;
     } catch (error) {
       console.error("Error during file replacement:", error);
       throw error;
@@ -157,7 +161,7 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
       } 
       // If there's a thumbnail to replace
       else if (existingFileInfo?.file === newContent.thumbnail) {
-        await uploadFileWithOverwrite();
+        const thumbnailFileName = await uploadFileWithOverwrite();
         setExistingFileInfo(null);
         setFileExistsDialog(false);
         

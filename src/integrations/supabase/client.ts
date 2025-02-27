@@ -10,3 +10,13 @@ export const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ey
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+// Helper to generate a unique filename while preserving extension
+export const generateUniqueFilename = (originalName: string): string => {
+  const timestamp = new Date().getTime();
+  const randomString = Math.random().toString(36).substring(2, 10);
+  const extension = originalName.split('.').pop();
+  const baseName = originalName.split('.').slice(0, -1).join('.');
+  
+  return `${baseName}_${timestamp}_${randomString}.${extension}`;
+};
