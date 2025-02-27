@@ -46,6 +46,29 @@ export default function Content() {
   
   const [selectedCategory, setSelectedCategory] = useState("all");
 
+  // Set up real-time subscription for content updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('content_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'content'
+        },
+        () => {
+          console.log('Content changed, refreshing...');
+          fetchContent();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedCategory, searchQuery]); // Re-subscribe when filters change
+
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -88,6 +111,29 @@ export default function Content() {
     };
     
     checkUser();
+
+    // Set up auth state subscription
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle();
+          
+        if (profileData) {
+          setUserProfile(profileData);
+          setIsConsultant(profileData.user_type === 'consultant');
+        }
+      } else {
+        setUserProfile(null);
+        setIsConsultant(false);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
   
   const fetchContent = async () => {
@@ -164,4 +210,4 @@ export default function Content() {
       </div>
     </div>
   );
-};
+}
