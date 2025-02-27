@@ -29,7 +29,7 @@ export default function Index() {
             </p>
             <div className="flex justify-center gap-4">
               <Button size="lg" className="gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/10 transition-all duration-300" asChild>
-                <Link to="/auth">Sign up <ArrowRight className="h-4 w-4" /></Link>
+                <Link to="/auth?mode=signup">Sign up <ArrowRight className="h-4 w-4" /></Link>
               </Button>
               <Button size="lg" variant="outline" className="backdrop-blur-sm" asChild>
                 <Link to="/about">Learn More</Link>
@@ -113,7 +113,7 @@ export default function Index() {
             Join our community of business professionals and get instant access to expert resources.
           </p>
           <Button size="lg" className="gap-2" asChild>
-            <Link to="/auth">Start Your Journey <ArrowRight className="h-4 w-4" /></Link>
+            <Link to="/auth?mode=signup">Start Your Journey <ArrowRight className="h-4 w-4" /></Link>
           </Button>
         </div>
       </section>

@@ -12,6 +12,7 @@ export default function Auth() {
   const [verificationSuccess, setVerificationSuccess] = useState(false);
   const [fullName, setFullName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "signin";
 
   useEffect(() => {
     // Handle email verification
@@ -123,7 +124,7 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 pt-16 sm:pt-32">
-      <AuthForm />
+      <AuthForm initialMode={initialMode} />
     </div>
   );
 }

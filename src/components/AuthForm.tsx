@@ -17,10 +17,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 type AuthMode = "signin" | "signup";
 
-export function AuthForm() {
+interface AuthFormProps {
+  initialMode?: AuthMode;
+}
+
+export function AuthForm({ initialMode = "signin" }: AuthFormProps) {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [mode, setMode] = useState<AuthMode>("signin");
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
