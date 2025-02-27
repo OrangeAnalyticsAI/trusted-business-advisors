@@ -9,6 +9,24 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       content: {
         Row: {
           content_type: string
@@ -47,6 +65,36 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      content_categories: {
+        Row: {
+          category_id: string
+          content_id: string
+        }
+        Insert: {
+          category_id: string
+          content_id: string
+        }
+        Update: {
+          category_id?: string
+          content_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_categories_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

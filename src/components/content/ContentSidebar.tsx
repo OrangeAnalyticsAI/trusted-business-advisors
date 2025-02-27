@@ -17,6 +17,8 @@ interface ContentSidebarProps {
   setSelectedCategory: (category: string) => void;
   isConsultant: boolean;
   onContentAdded: () => void;
+  selectedMetaCategories: string[];
+  setSelectedMetaCategories: (categories: string[]) => void;
 }
 
 export const ContentSidebar = ({
@@ -27,6 +29,8 @@ export const ContentSidebar = ({
   setSelectedCategory,
   isConsultant,
   onContentAdded,
+  selectedMetaCategories,
+  setSelectedMetaCategories,
 }: ContentSidebarProps) => {
   return (
     <div className="lg:col-span-1">
@@ -40,6 +44,8 @@ export const ContentSidebar = ({
           categories={categories}
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
+          selectedMetaCategories={selectedMetaCategories}
+          setSelectedMetaCategories={setSelectedMetaCategories}
         />
         
         {isConsultant && (

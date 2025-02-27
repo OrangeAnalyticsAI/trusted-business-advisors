@@ -2,11 +2,12 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   SUPABASE_URL, 
   supabase, 
@@ -20,12 +21,18 @@ import {
 } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 interface NewContent {
   title: string;
   description: string;
   content_type: string;
   contentFile: File | null;
   thumbnail: File | null;
+  categories: string[];
 }
 
 interface ConsultantToolsProps {
@@ -36,12 +43,14 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loadingContent, setLoadingContent] = useState(false);
   const [fileExistsDialog, setFileExistsDialog] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [newContent, setNewContent] = useState<NewContent>({
     title: "",
     description: "",
     content_type: "video",
     contentFile: null,
-    thumbnail: null
+    thumbnail: null,
+    categories: []
   });
 
   // Store file info when duplicate is detected
@@ -49,6 +58,42 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
     fileName: string;
     file: File;
   } | null>(null);
+
+  // Fetch categories when component mounts
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*')
+          .order('name');
+          
+        if (error) {
+          console.error("Error fetching categories:", error);
+        } else {
+          setCategories(data || []);
+        }
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+      }
+    };
+    
+    fetchCategories();
+  }, []);
+
+  const handleCategoryChange = (categoryId: string, checked: boolean) => {
+    if (checked) {
+      setNewContent({
+        ...newContent,
+        categories: [...newContent.categories, categoryId]
+      });
+    } else {
+      setNewContent({
+        ...newContent,
+        categories: newContent.categories.filter(id => id !== categoryId)
+      });
+    }
+  };
 
   // Handle file replacement when a file with the same name is found
   const handleReplaceFile = async () => {
@@ -105,6 +150,20 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
         }
       }
       
+      // Get the existing content record to retrieve its ID
+      const { data: existingContent, error: fetchError } = await supabase
+        .from('content')
+        .select('id')
+        .eq('original_filename', fileName)
+        .single();
+        
+      if (fetchError) {
+        toast.error(`Failed to find existing content: ${fetchError.message}`);
+        setLoadingContent(false);
+        setFileExistsDialog(false);
+        return;
+      }
+      
       // Update the content record
       const updateSuccess = await replaceContentFile(
         fileName,
@@ -123,6 +182,35 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
         return;
       }
       
+      // Now handle the categories
+      // First, delete all existing category associations
+      const { error: deleteError } = await supabase
+        .from('content_categories')
+        .delete()
+        .eq('content_id', existingContent.id);
+        
+      if (deleteError) {
+        console.error("Error deleting existing categories:", deleteError);
+        // Continue anyway to add new categories
+      }
+      
+      // Then add the new categories if any are selected
+      if (newContent.categories.length > 0) {
+        const categoryMappings = newContent.categories.map(categoryId => ({
+          content_id: existingContent.id,
+          category_id: categoryId
+        }));
+        
+        const { error: insertError } = await supabase
+          .from('content_categories')
+          .insert(categoryMappings);
+          
+        if (insertError) {
+          console.error("Error adding categories:", insertError);
+          toast.error("Content updated but failed to save categories");
+        }
+      }
+      
       toast.success("Content replaced successfully");
       onContentAdded();
       
@@ -132,7 +220,8 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
         description: "",
         content_type: "video",
         contentFile: null,
-        thumbnail: null
+        thumbnail: null,
+        categories: []
       });
       setFileExistsDialog(false);
       setDialogOpen(false);
@@ -251,6 +340,23 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
         return;
       }
       
+      // Now add the categories if any are selected
+      if (newContent.categories.length > 0) {
+        const categoryMappings = newContent.categories.map(categoryId => ({
+          content_id: contentData.id,
+          category_id: categoryId
+        }));
+        
+        const { error: categoriesError } = await supabase
+          .from('content_categories')
+          .insert(categoryMappings);
+          
+        if (categoriesError) {
+          console.error("Error adding categories:", categoriesError);
+          toast.error("Content added but failed to save categories");
+        }
+      }
+      
       toast.success("Content added successfully");
       onContentAdded();
       
@@ -260,7 +366,8 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
         description: "",
         content_type: "video",
         contentFile: null,
-        thumbnail: null
+        thumbnail: null,
+        categories: []
       });
       setDialogOpen(false);
       
@@ -284,7 +391,7 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
               Load Content
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <form onSubmit={handleSubmitContent}>
               <DialogHeader>
                 <DialogTitle>Add New Content</DialogTitle>
@@ -344,6 +451,28 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
                     accept="image/*"
                     onChange={(e) => setNewContent({...newContent, thumbnail: e.target.files?.[0] || null})}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label>Categories</Label>
+                  <div className="grid grid-cols-2 gap-2 border rounded-md p-3 max-h-40 overflow-y-auto">
+                    {categories.map((category) => (
+                      <div key={category.id} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`category-${category.id}`} 
+                          checked={newContent.categories.includes(category.id)}
+                          onCheckedChange={(checked) => 
+                            handleCategoryChange(category.id, checked === true)
+                          }
+                        />
+                        <label 
+                          htmlFor={`category-${category.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {category.name}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
               <DialogFooter>

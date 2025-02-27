@@ -1,11 +1,17 @@
 
 import { Card } from "@/components/ui/card";
-import { FileText, Video, Table, Presentation, FileType, Trash2, Download } from "lucide-react";
+import { FileText, Video, Table, Presentation, FileType, Trash2, Download, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+interface Category {
+  id: string;
+  name: string;
+}
 
 interface ContentItemProps {
   id: string;
@@ -31,6 +37,62 @@ export const ContentItem = ({
   onDelete,
 }: ContentItemProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        
+        const { data, error } = await supabase
+          .from('content_categories')
+          .select(`
+            category_id,
+            categories:category_id(id, name)
+          `)
+          .eq('content_id', id);
+          
+        if (error) {
+          console.error("Error fetching content categories:", error);
+        } else {
+          // Extract the categories from the joined query
+          const extractedCategories = data
+            .map(item => item.categories as Category)
+            .filter(Boolean); // Remove any null values
+          
+          setCategories(extractedCategories);
+        }
+      } catch (err) {
+        console.error("Error in categories fetch:", err);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    
+    fetchCategories();
+    
+    // Set up subscription for real-time updates
+    const channel = supabase
+      .channel('content-categories-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'content_categories',
+          filter: `content_id=eq.${id}`
+        },
+        () => {
+          fetchCategories();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id]);
   
   const getContentIcon = (type: string) => {
     switch (type) {
@@ -147,7 +209,18 @@ export const ContentItem = ({
       </div>
       <div className="p-4">
         <h3 className="font-semibold mb-2">{title}</h3>
-        <p className="text-muted-foreground text-sm">{description}</p>
+        <p className="text-muted-foreground text-sm mb-2">{description}</p>
+        
+        {categories.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {categories.map((category) => (
+              <Badge key={category.id} variant="outline" className="text-xs">
+                {category.name}
+              </Badge>
+            ))}
+          </div>
+        )}
+        
         {content_url && (
           <div className="mt-4 flex items-center justify-between">
             <TooltipProvider>

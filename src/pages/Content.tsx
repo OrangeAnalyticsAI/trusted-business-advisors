@@ -34,6 +34,7 @@ export default function Content() {
   const [loadingContent, setLoadingContent] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
+  const [selectedMetaCategories, setSelectedMetaCategories] = useState<string[]>([]);
   
   const categories = [
     { id: "all", name: "All Content" },
@@ -67,7 +68,7 @@ export default function Content() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedCategory, searchQuery]); // Re-subscribe when filters change
+  }, [selectedCategory, searchQuery, selectedMetaCategories]); // Re-subscribe when filters change
 
   useEffect(() => {
     const checkUser = async () => {
@@ -140,27 +141,74 @@ export default function Content() {
     try {
       setLoadingContent(true);
       
-      let query = supabase.from('content').select('*');
-      
-      if (selectedCategory !== "all") {
-        const contentType = selectedCategory.slice(0, -1);
-        query = query.eq('content_type', contentType);
-      }
-      
-      if (searchQuery) {
-        query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
-      }
-      
-      query = query.order('created_at', { ascending: false });
-      
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error("Error fetching content:", error);
-        toast.error("Failed to load content");
+      // If we have selected meta categories, we need to join with content_categories
+      if (selectedMetaCategories.length > 0) {
+        // First get content IDs that have the selected categories
+        const { data: contentIds, error: categoryError } = await supabase
+          .from('content_categories')
+          .select('content_id')
+          .in('category_id', selectedMetaCategories);
+          
+        if (categoryError) {
+          console.error("Error fetching content by categories:", categoryError);
+          toast.error("Failed to filter by categories");
+          return;
+        }
+        
+        // If no content matches the selected categories, return empty array
+        if (!contentIds || contentIds.length === 0) {
+          setContentItems([]);
+          return;
+        }
+        
+        // Extract just the content IDs into an array
+        const ids = contentIds.map(item => item.content_id);
+        
+        // Get all content that matches these IDs and other filters
+        let query = supabase.from('content').select('*').in('id', ids);
+        
+        if (selectedCategory !== "all") {
+          const contentType = selectedCategory.slice(0, -1);
+          query = query.eq('content_type', contentType);
+        }
+        
+        if (searchQuery) {
+          query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+        }
+        
+        query = query.order('created_at', { ascending: false });
+        
+        const { data, error } = await query;
+        
+        if (error) {
+          console.error("Error fetching content:", error);
+          toast.error("Failed to load content");
+        } else {
+          setContentItems(data || []);
+        }
       } else {
-        setContentItems(data || []);
-        console.log("Content loaded:", data);
+        // Regular query without category filtering
+        let query = supabase.from('content').select('*');
+        
+        if (selectedCategory !== "all") {
+          const contentType = selectedCategory.slice(0, -1);
+          query = query.eq('content_type', contentType);
+        }
+        
+        if (searchQuery) {
+          query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+        }
+        
+        query = query.order('created_at', { ascending: false });
+        
+        const { data, error } = await query;
+        
+        if (error) {
+          console.error("Error fetching content:", error);
+          toast.error("Failed to load content");
+        } else {
+          setContentItems(data || []);
+        }
       }
     } catch (error) {
       console.error("Content fetch error:", error);
@@ -178,7 +226,7 @@ export default function Content() {
     if (!loading) {
       fetchContent();
     }
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, searchQuery, selectedMetaCategories]);
   
   return (
     <div className="min-h-screen">
@@ -195,10 +243,12 @@ export default function Content() {
             setSelectedCategory={setSelectedCategory}
             isConsultant={isConsultant}
             onContentAdded={fetchContent}
+            selectedMetaCategories={selectedMetaCategories}
+            setSelectedMetaCategories={setSelectedMetaCategories}
           />
           
           <ContentMainArea 
-            loading={loading}
+            loading={loading || loadingContent}
             contentItems={contentItems}
             userProfile={userProfile}
             isConsultant={isConsultant}
