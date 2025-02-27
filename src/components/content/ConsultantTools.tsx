@@ -595,7 +595,7 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
 
   return (
     <Card className="p-4">
-      <h3 className="text-sm font-semibold mb-3">Consultant Tools</h3>
+      <h3 className="text-sm font-semibold mb-3">Signed in as consultant</h3>
       <div className="space-y-3">
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
