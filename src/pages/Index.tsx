@@ -28,8 +28,8 @@ export default function Index() {
               Access premium business content from industry experts. Transform your business with actionable insights and professional guidance.
             </p>
             <div className="flex justify-center gap-4">
-              <Button size="lg" disabled className="gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/10 transition-all duration-300">
-                Jen hasn't built this yet <ArrowRight className="h-4 w-4" />
+              <Button size="lg" className="gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/10 transition-all duration-300" asChild>
+                <Link to="/auth">Sign up <ArrowRight className="h-4 w-4" /></Link>
               </Button>
               <Button size="lg" variant="outline" className="backdrop-blur-sm" asChild>
                 <Link to="/about">Learn More</Link>
@@ -112,8 +112,8 @@ export default function Index() {
           <p className="text-muted-foreground text-sm sm:text-base mb-6 sm:mb-8">
             Join our community of business professionals and get instant access to expert resources.
           </p>
-          <Button size="lg" className="gap-2">
-            Start Your Journey <ArrowRight className="h-4 w-4" />
+          <Button size="lg" className="gap-2" asChild>
+            <Link to="/auth">Start Your Journey <ArrowRight className="h-4 w-4" /></Link>
           </Button>
         </div>
       </section>
