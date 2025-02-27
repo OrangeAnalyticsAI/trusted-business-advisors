@@ -1,3 +1,4 @@
+
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { FileText, Video, Table, Search, Upload, Loader2, Image } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, SUPABASE_URL } from "@/integrations/supabase/client";
 
 interface ContentItem {
   id: string;
@@ -160,7 +161,7 @@ export default function Content() {
       formData.append('description', newContent.description || '');
       formData.append('contentType', newContent.content_type);
 
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/upload-content`, {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/upload-content`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
