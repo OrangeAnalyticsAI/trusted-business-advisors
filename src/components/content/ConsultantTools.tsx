@@ -50,6 +50,15 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
         return;
       }
 
+      // Get the current session token - needed for authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("No active session found");
+        return;
+      }
+
+      console.log("Preparing to upload content with file:", newContent.contentFile.name);
+      
       const formData = new FormData();
       formData.append('contentFile', newContent.contentFile);
       if (newContent.thumbnail) {
@@ -59,16 +68,21 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
       formData.append('description', newContent.description || '');
       formData.append('contentType', newContent.content_type);
 
+      console.log("Sending request to Edge Function with access token and user ID");
+      
       const response = await fetch(`${SUPABASE_URL}/functions/v1/upload-content`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'x-user-id': user.id
         },
         body: formData
       });
 
+      console.log("Response status:", response.status);
+      
       const result = await response.json();
+      console.log("Response data:", result);
 
       if (!response.ok) {
         throw new Error(result.error || 'Failed to upload content');
