@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { FileText, Video, Table, Presentation, FileType, Trash2, Download, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,10 +55,9 @@ export const ContentItem = ({
         if (error) {
           console.error("Error fetching content categories:", error);
         } else {
-          // Extract the categories from the joined query
           const extractedCategories = data
             .map(item => item.categories as Category)
-            .filter(Boolean); // Remove any null values
+            .filter(Boolean);
           
           setCategories(extractedCategories);
         }
@@ -72,7 +70,6 @@ export const ContentItem = ({
     
     fetchCategories();
     
-    // Set up subscription for real-time updates
     const channel = supabase
       .channel('content-categories-changes')
       .on(
@@ -115,24 +112,14 @@ export const ContentItem = ({
     if (!content_url) return;
     
     if (original_filename) {
-      // Create a temporary anchor element
       const link = document.createElement('a');
       link.href = content_url;
-      
-      // Set the download attribute with the original filename
       link.setAttribute('download', original_filename);
-      
-      // Append, click, then remove
       document.body.appendChild(link);
       link.click();
-      
-      // Clean up
       document.body.removeChild(link);
-      
-      // Show success toast
       toast.success(`Downloading ${original_filename}`);
     } else {
-      // Fall back to normal behavior if no original filename
       window.open(content_url, '_blank');
     }
   };
@@ -143,11 +130,9 @@ export const ContentItem = ({
     try {
       setIsDeleting(true);
       
-      // Extract the file path from the content_url
       const contentUrlPath = content_url ? new URL(content_url).pathname.split('/').pop() : null;
       const thumbnailUrlPath = thumbnail_url ? new URL(thumbnail_url).pathname.split('/').pop() : null;
       
-      // Delete from the database first
       const { error: dbError } = await supabase
         .from('content')
         .delete()
@@ -157,7 +142,6 @@ export const ContentItem = ({
         throw new Error(`Error deleting from database: ${dbError.message}`);
       }
       
-      // Delete files from storage if they exist
       if (contentUrlPath) {
         const { error: contentError } = await supabase.storage
           .from('content_files')
@@ -165,7 +149,6 @@ export const ContentItem = ({
           
         if (contentError) {
           console.error('Error deleting content file:', contentError);
-          // Continue even if file deletion fails
         }
       }
       
@@ -176,13 +159,11 @@ export const ContentItem = ({
           
         if (thumbnailError) {
           console.error('Error deleting thumbnail:', thumbnailError);
-          // Continue even if thumbnail deletion fails
         }
       }
       
       toast.success("Content deleted successfully");
       
-      // Call onDelete callback if provided
       if (onDelete) {
         onDelete();
       }
@@ -196,7 +177,7 @@ export const ContentItem = ({
 
   return (
     <Card key={id} className="overflow-hidden flex flex-col">
-      <div className="aspect-video bg-muted relative flex items-center justify-center">
+      <div className="aspect-[5/3] bg-muted relative flex items-center justify-center">
         {thumbnail_url ? (
           <img 
             src={thumbnail_url} 
@@ -223,7 +204,7 @@ export const ContentItem = ({
       </div>
       
       {content_url && (
-        <div className="p-4 pt-0 mt-auto border-t border-border">
+        <div className="p-4 pt-0 mt-auto">
           <div className="flex items-center justify-between gap-2">
             <TooltipProvider>
               <Tooltip>
