@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Home } from "lucide-react";
 
 export function Navbar() {
   const navigate = useNavigate();
@@ -50,7 +51,8 @@ export function Navbar() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6 ml-[220px]">
           <div className="hidden md:flex gap-6">
-            <a href="/content" className="text-muted-foreground hover:text-primary transition-colors">
+            <a href="/content" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5">
+              <Home className="h-4 w-4" />
               Content
             </a>
             <a href="/pricing" className="text-muted-foreground hover:text-primary transition-colors">

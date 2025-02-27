@@ -1,6 +1,7 @@
+
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
-import { ArrowRight, FileText, Video, Table, Lock } from "lucide-react";
+import { ArrowRight, FileText, Video, Table, Lock, Home } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
@@ -43,16 +44,17 @@ export default function Index() {
         <div className="container">
           <div className="flex flex-wrap justify-center gap-8 sm:gap-16">
             {[
-              { href: "/content", label: "Content" },
-              { href: "/pricing", label: "Pricing" },
-              { href: "#consultation", label: "Book a consultation" },
-              { href: "/about", label: "About" }
+              { href: "/content", label: "Content", icon: Home },
+              { href: "/pricing", label: "Pricing", icon: null },
+              { href: "#consultation", label: "Book a consultation", icon: null },
+              { href: "/about", label: "About", icon: null }
             ].map((link, i) => (
               <a
                 key={i}
                 href={link.href}
-                className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
+                className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
               >
+                {link.icon && <link.icon className="h-4 w-4" />}
                 {link.label}
               </a>
             ))}
