@@ -23,16 +23,16 @@ const App = () => {
     // Check initial auth state
     const checkAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setIsAuthenticated(!!session);
+        const { data } = await supabase.auth.getSession();
+        setIsAuthenticated(!!data.session);
 
         // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        const { data: authData } = supabase.auth.onAuthStateChange((event, session) => {
           setIsAuthenticated(!!session);
         });
 
         return () => {
-          subscription.unsubscribe();
+          authData.subscription.unsubscribe();
         };
       } catch (error) {
         console.error("Auth check error:", error);

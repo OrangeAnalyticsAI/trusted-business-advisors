@@ -11,7 +11,7 @@ export default function Auth() {
   const [verifying, setVerifying] = useState(false);
   const [verificationSuccess, setVerificationSuccess] = useState(false);
   const [fullName, setFullName] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // Handle email verification
@@ -72,22 +72,20 @@ export default function Auth() {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session && !verificationSuccess) {
+        const { data } = await supabase.auth.getSession();
+        if (data.session && !verificationSuccess) {
           navigate("/");
         }
       } catch (error) {
         console.error("Session check error:", error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
     checkSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+    const { data: authData } = supabase.auth.onAuthStateChange(
+      (event, session) => {
         if (session && !verificationSuccess) {
           navigate("/");
         }
@@ -95,19 +93,9 @@ export default function Auth() {
     );
 
     return () => {
-      subscription.unsubscribe();
+      authData.subscription.unsubscribe();
     };
   }, [navigate, verificationSuccess]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 pt-16 sm:pt-32">
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold mb-2">Loading...</h2>
-        </div>
-      </div>
-    );
-  }
 
   if (verifying) {
     return (
