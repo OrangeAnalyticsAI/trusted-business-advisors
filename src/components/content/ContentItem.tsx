@@ -1,6 +1,6 @@
 
 import { Card } from "@/components/ui/card";
-import { FileText, Video, Table, Presentation, FileType, Trash2, Download, Tag, Pencil, Gift, Crown } from "lucide-react";
+import { FileText, Video, Table, Presentation, FileType, Trash2, Download, Pencil, Gift, PoundSterling } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -216,13 +216,6 @@ export const ContentItem = ({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            
-            {is_premium && (
-              <Badge className="bg-amber-500 hover:bg-amber-600">Premium</Badge>
-            )}
-            {!is_premium && (
-              <Badge className="bg-green-500 hover:bg-green-600">Free</Badge>
-            )}
           </div>
           
           <TooltipProvider>
@@ -267,23 +260,49 @@ export const ContentItem = ({
         {content_url && (
           <div className="p-4 pt-0 mt-auto">
             <div className="flex items-center justify-between gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      className="bg-primary/10 border-primary/20 hover:bg-primary/20 hover:text-primary transition-all duration-200"
-                      onClick={handleViewContent}
-                    >
-                      <Download className="h-4 w-4 text-primary" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{original_filename ? `Download ${original_filename}` : 'View content'}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <div className="flex gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        className="bg-primary/10 border-primary/20 hover:bg-primary/20 hover:text-primary transition-all duration-200"
+                        onClick={handleViewContent}
+                      >
+                        <Download className="h-4 w-4 text-primary" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{original_filename ? `Download ${original_filename}` : 'View content'}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className={is_premium 
+                          ? "bg-green-500/10 border-green-500/20 hover:bg-green-500/20 hover:text-green-500 transition-all duration-200" 
+                          : "bg-pink-500/10 border-pink-500/20 hover:bg-pink-500/20 hover:text-pink-500 transition-all duration-200"
+                        }
+                      >
+                        {is_premium ? (
+                          <PoundSterling className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <Gift className="h-4 w-4 text-pink-500" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{is_premium ? 'Premium Content' : 'Free Content'}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               
               {isConsultant && (
                 <div className="flex gap-2">
