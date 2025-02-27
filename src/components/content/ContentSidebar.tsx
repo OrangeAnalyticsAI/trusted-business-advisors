@@ -35,6 +35,10 @@ export const ContentSidebar = ({
   return (
     <div className="lg:col-span-1">
       <div className="sticky top-24 space-y-6">
+        {isConsultant && (
+          <ConsultantTools onContentAdded={onContentAdded} />
+        )}
+        
         <ContentSearch 
           searchQuery={searchQuery} 
           setSearchQuery={setSearchQuery} 
@@ -47,10 +51,6 @@ export const ContentSidebar = ({
           selectedMetaCategories={selectedMetaCategories}
           setSelectedMetaCategories={setSelectedMetaCategories}
         />
-        
-        {isConsultant && (
-          <ConsultantTools onContentAdded={onContentAdded} />
-        )}
         
         <PopularResources />
       </div>
