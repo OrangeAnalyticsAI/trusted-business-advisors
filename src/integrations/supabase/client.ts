@@ -11,6 +11,9 @@ export const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ey
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
+// Export storage for direct access
+export const storage = supabase.storage;
+
 // Helper to generate a unique filename while preserving extension
 export const generateUniqueFilename = (originalName: string): string => {
   const timestamp = new Date().getTime();

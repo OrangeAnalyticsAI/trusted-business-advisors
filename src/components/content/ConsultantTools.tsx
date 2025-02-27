@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { SUPABASE_URL, supabase, generateUniqueFilename } from "@/integrations/supabase/client";
+import { SUPABASE_URL, supabase, storage, generateUniqueFilename } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface NewContent {
@@ -42,28 +42,49 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
     bucket: string;
   } | null>(null);
 
+  // This function now checks both the storage and the database
   const checkFileExistsAndUpload = async (file: File, bucketName: string) => {
     const fileName = file.name;
     const fileExt = fileName.split('.').pop() || '';
     
     console.log(`Checking if file exists: ${fileName} in bucket ${bucketName}`);
     
-    // Check if file exists
-    const { data: existingFile, error: checkError } = await supabase.storage
+    // First check the database for original_filename
+    const { data: existingContent, error: dbError } = await supabase
+      .from('content')
+      .select('original_filename')
+      .eq('original_filename', fileName);
+      
+    if (dbError) {
+      console.error("Error checking database for existing filename:", dbError);
+    } else if (existingContent && existingContent.length > 0) {
+      console.log("File found in database:", existingContent);
+      setExistingFileInfo({
+        fileName,
+        fileExt,
+        file,
+        bucket: bucketName
+      });
+      setFileExistsDialog(true);
+      return { exists: true, fileName: null };
+    }
+    
+    // Then check the storage bucket
+    const { data: existingFiles, error: storageError } = await storage
       .from(bucketName)
       .list('', {
         search: fileName
       });
     
-    if (checkError) {
-      console.error("Error checking for existing file:", checkError);
-      throw new Error(`Failed to check if file exists: ${checkError.message}`);
+    if (storageError) {
+      console.error("Error checking for existing file in storage:", storageError);
+      throw new Error(`Failed to check if file exists: ${storageError.message}`);
     }
     
-    const fileExists = existingFile.some(f => f.name === fileName);
+    const fileExists = existingFiles && existingFiles.some(f => f.name === fileName);
     
     if (fileExists) {
-      console.log("File exists, showing confirmation dialog");
+      console.log("File exists in storage but not in database, showing confirmation dialog");
       setExistingFileInfo({
         fileName,
         fileExt,
@@ -75,7 +96,7 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
     } else {
       console.log("File does not exist, uploading directly");
       // Upload the file directly using original filename
-      const { data, error: uploadError } = await supabase.storage
+      const { data, error: uploadError } = await storage
         .from(bucketName)
         .upload(fileName, file, { upsert: false });
       
@@ -100,7 +121,7 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
     
     try {
       // Upload with the unique filename
-      const { data, error: uploadError } = await supabase.storage
+      const { data, error: uploadError } = await storage
         .from(bucket)
         .upload(uniqueFileName, file);
       
@@ -111,8 +132,21 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
       
       console.log("File uploaded successfully with unique name");
       
+      // First, check if we have this file in the database
+      const { data: contentWithFileName, error: contentError } = await supabase
+        .from('content')
+        .select('id')
+        .eq('original_filename', fileName);
+      
+      if (contentError) {
+        console.error("Error checking content table:", contentError);
+      } else if (contentWithFileName && contentWithFileName.length > 0) {
+        console.log("File records found in database:", contentWithFileName);
+        // We'll let the finalizeContentSubmission function handle this
+      }
+      
       // Get a list of all files with matching name to ensure we're removing the correct one
-      const { data: fileList, error: listError } = await supabase.storage
+      const { data: fileList, error: listError } = await storage
         .from(bucket)
         .list('', {
           search: fileName
@@ -132,7 +166,7 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
           const filesToRemove = exactMatches.map(f => f.name);
           console.log("Attempting to delete these files:", filesToRemove);
           
-          const { data: removeData, error: removeError } = await supabase.storage
+          const { data: removeData, error: removeError } = await storage
             .from(bucket)
             .remove(filesToRemove);
           
@@ -232,7 +266,7 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
       }
       
       // Get the public URL for the uploaded file
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = storage
         .from('content_files')
         .getPublicUrl(contentFileName);
       
@@ -254,7 +288,7 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
           thumbnailFileName = fileName;
           
           if (thumbnailFileName) {
-            const { data: { publicUrl: thumbPublicUrl } } = supabase.storage
+            const { data: { publicUrl: thumbPublicUrl } } = storage
               .from('thumbnails')
               .getPublicUrl(thumbnailFileName);
             

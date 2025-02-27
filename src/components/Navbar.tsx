@@ -2,7 +2,7 @@
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
-import { supabase, SUPABASE_URL } from "@/integrations/supabase/client";
+import { supabase, SUPABASE_URL, storage } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Home, Loader2 } from "lucide-react";
