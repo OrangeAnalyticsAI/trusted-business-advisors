@@ -216,28 +216,30 @@ export const ContentItem = ({
           </TooltipProvider>
           
           {categories.length > 0 && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex flex-wrap gap-1 mb-3 line-clamp-2 hover:cursor-help">
-                    {categories.map((category) => (
-                      <Badge key={category.id} variant="outline" className="text-xs">
-                        {category.name}
-                      </Badge>
-                    ))}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[300px]">
-                  <div className="flex flex-wrap gap-1">
-                    {categories.map((category) => (
-                      <Badge key={category.id} variant="outline" className="text-xs">
-                        {category.name}
-                      </Badge>
-                    ))}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <div className="h-[44px] overflow-hidden">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex flex-wrap gap-1 mb-3 line-clamp-2 hover:cursor-help">
+                      {categories.map((category) => (
+                        <Badge key={category.id} variant="outline" className="text-xs">
+                          {category.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[300px]">
+                    <div className="flex flex-wrap gap-1">
+                      {categories.map((category) => (
+                        <Badge key={category.id} variant="outline" className="text-xs">
+                          {category.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           )}
         </div>
         
