@@ -3,7 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Filter, Tag, X } from "lucide-react";
+import { Filter, Tag, X, FileText } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Category {
   id: string;
@@ -68,22 +69,34 @@ export const ContentCategories = ({
 
   return (
     <Card className="p-4">
-      <h3 className="text-sm font-semibold mb-3">Categories</h3>
-      <div className="space-y-1">
+      <h3 className="text-sm font-semibold mb-3 flex items-center">
+        <FileText className="h-4 w-4 mr-1" />
+        Categories
+      </h3>
+      
+      <div className={`flex flex-wrap gap-1 ${expanded ? '' : 'max-h-28 overflow-hidden'}`}>
         {categories.map((category) => (
-          <button
-            key={category.id}
+          <Badge 
+            key={category.id} 
+            variant={selectedCategory === category.id ? "default" : "outline"}
+            className={`cursor-pointer ${selectedCategory === category.id 
+              ? 'hover:bg-primary/80' 
+              : 'hover:bg-secondary/50'}`}
             onClick={() => setSelectedCategory(category.id)}
-            className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-              selectedCategory === category.id
-                ? "bg-primary/10 text-primary font-medium"
-                : "hover:bg-muted/50 text-foreground"
-            }`}
           >
             {category.name}
-          </button>
+          </Badge>
         ))}
       </div>
+      
+      {categories.length > 6 && (
+        <button 
+          onClick={() => setExpanded(!expanded)}
+          className="text-xs text-muted-foreground hover:text-primary transition-colors mt-2"
+        >
+          {expanded ? 'Show less' : 'Show more'}
+        </button>
+      )}
       
       {metaCategories.length > 0 && (
         <div className="mt-4 pt-4 border-t">
