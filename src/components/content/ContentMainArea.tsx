@@ -2,7 +2,6 @@
 import { Loader2 } from "lucide-react";
 import { ContentItemsGrid } from "./ContentItemsGrid";
 import { NoContentFound } from "./NoContentFound";
-import { DebugInfo } from "./DebugInfo";
 import { FeatureContentSection } from "./FeatureContentSection";
 
 interface ContentItem {
@@ -52,8 +51,6 @@ export const ContentMainArea = ({
         </div>
       ) : (
         <>
-          <DebugInfo userProfile={userProfile} isConsultant={isConsultant} />
-        
           {contentItems.length > 0 && (
             <ContentItemsGrid 
               items={contentItems} 
