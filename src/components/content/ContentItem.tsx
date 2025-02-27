@@ -196,7 +196,7 @@ export const ContentItem = ({
           {/* Premium badge in top right corner */}
           {is_premium ? (
             <div className="absolute top-2 right-2 bg-amber-500 text-white rounded-full p-1">
-              <Crown className="h-4 w-4" />
+              <PoundSterling className="h-4 w-4" />
             </div>
           ) : (
             <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-1">
