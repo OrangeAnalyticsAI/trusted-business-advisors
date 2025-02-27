@@ -1,10 +1,11 @@
 
 import { Card } from "@/components/ui/card";
-import { FileText, Video, Table, Presentation, FileType, Trash2 } from "lucide-react";
+import { FileText, Video, Table, Presentation, FileType, Trash2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ContentItemProps {
   id: string;
@@ -148,25 +149,44 @@ export const ContentItem = ({
         <h3 className="font-semibold mb-2">{title}</h3>
         <p className="text-muted-foreground text-sm">{description}</p>
         {content_url && (
-          <div className="mt-4 flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              className="text-primary text-sm gap-2"
-              onClick={handleViewContent}
-            >
-              {original_filename ? 'Download' : 'View'} {original_filename ? '(' + original_filename + ')' : ''}
-            </Button>
+          <div className="mt-4 flex items-center justify-between">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className="bg-primary/10 border-primary/20 hover:bg-primary/20 hover:text-primary transition-all duration-200"
+                    onClick={handleViewContent}
+                  >
+                    <Download className="h-4 w-4 text-primary" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{original_filename ? `Download ${original_filename}` : 'View content'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             
             {isConsultant && (
-              <Button
-                variant="outline"
-                size="icon"
-                className="text-destructive hover:bg-destructive/10"
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="bg-destructive/10 border-destructive/20 hover:bg-destructive/20 hover:text-destructive transition-all duration-200"
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Delete content</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
         )}
