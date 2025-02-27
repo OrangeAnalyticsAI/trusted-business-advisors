@@ -434,7 +434,9 @@ export default function Content() {
                     <p className="text-muted-foreground mb-6">
                       {searchQuery || selectedCategory !== "all" 
                         ? "Try changing your search or category filters" 
-                        : "Be the first to add premium business content"}
+                        : isConsultant 
+                          ? "Be the first to add premium business content" 
+                          : "Your consultant will add premium content soon"}
                     </p>
                     {isConsultant && (
                       <Button onClick={() => setDialogOpen(true)}>
