@@ -69,37 +69,8 @@ export const ContentCategories = ({
 
   return (
     <Card className="p-4">
-      <h3 className="text-sm font-semibold mb-3 flex items-center">
-        <FileText className="h-4 w-4 mr-1" />
-        Format
-      </h3>
-      
-      <div className={`flex flex-wrap gap-1 ${expanded ? '' : 'max-h-28 overflow-hidden'}`}>
-        {categories.map((category) => (
-          <Badge 
-            key={category.id} 
-            variant={selectedCategory === category.id ? "default" : "outline"}
-            className={`cursor-pointer ${selectedCategory === category.id 
-              ? 'hover:bg-primary/80' 
-              : 'hover:bg-secondary/50'}`}
-            onClick={() => setSelectedCategory(category.id)}
-          >
-            {category.name}
-          </Badge>
-        ))}
-      </div>
-      
-      {categories.length > 6 && (
-        <button 
-          onClick={() => setExpanded(!expanded)}
-          className="text-xs text-muted-foreground hover:text-primary transition-colors mt-2"
-        >
-          {expanded ? 'Show less' : 'Show more'}
-        </button>
-      )}
-      
       {metaCategories.length > 0 && (
-        <div className="mt-4 pt-4 border-t">
+        <div className="mb-4 pb-4 border-b">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold flex items-center">
               <Tag className="h-4 w-4 mr-1" /> 
@@ -159,6 +130,35 @@ export const ContentCategories = ({
             ))}
           </div>
         </div>
+      )}
+
+      <h3 className="text-sm font-semibold mb-3 flex items-center">
+        <FileText className="h-4 w-4 mr-1" />
+        Format
+      </h3>
+      
+      <div className={`flex flex-wrap gap-1 ${expanded ? '' : 'max-h-28 overflow-hidden'}`}>
+        {categories.map((category) => (
+          <Badge 
+            key={category.id} 
+            variant={selectedCategory === category.id ? "default" : "outline"}
+            className={`cursor-pointer ${selectedCategory === category.id 
+              ? 'hover:bg-primary/80' 
+              : 'hover:bg-secondary/50'}`}
+            onClick={() => setSelectedCategory(category.id)}
+          >
+            {category.name}
+          </Badge>
+        ))}
+      </div>
+      
+      {categories.length > 6 && (
+        <button 
+          onClick={() => setExpanded(!expanded)}
+          className="text-xs text-muted-foreground hover:text-primary transition-colors mt-2"
+        >
+          {expanded ? 'Show less' : 'Show more'}
+        </button>
       )}
     </Card>
   );
