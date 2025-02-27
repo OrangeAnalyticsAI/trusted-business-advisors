@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { FileText, Video, Table, Presentation, FileType, Trash2, Download, Tag, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -278,6 +279,7 @@ export const ContentItem = ({
         contentId={id}
         initialTitle={title}
         initialDescription={description}
+        initialThumbnailUrl={thumbnail_url}
         onUpdate={() => {
           if (onDelete) {
             onDelete();
