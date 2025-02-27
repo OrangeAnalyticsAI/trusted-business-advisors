@@ -1,6 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { FileText, Table, Video } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface FeatureContentSectionProps {
   title: string;
@@ -22,8 +23,27 @@ export const FeatureContentSection = ({ title, items, icon }: FeatureContentSect
                 <Video className="h-12 w-12 text-muted-foreground" />
               </div>
               <div className="p-4">
-                <h3 className="font-semibold mb-2">{item.title}</h3>
-                <p className="text-muted-foreground text-sm">{item.description}</p>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <h3 className="font-semibold mb-2 line-clamp-2 hover:cursor-help">{item.title}</h3>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[300px] break-words">
+                      <p>{item.title}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="text-muted-foreground text-sm line-clamp-2 hover:cursor-help">{item.description}</p>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[300px] break-words">
+                      <p>{item.description}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </Card>
           ) : (
@@ -32,8 +52,27 @@ export const FeatureContentSection = ({ title, items, icon }: FeatureContentSect
                 <IconComponent className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold mb-2">{item.title}</h3>
-                <p className="text-muted-foreground text-sm">{item.description}</p>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <h3 className="font-semibold mb-2 line-clamp-2 hover:cursor-help">{item.title}</h3>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[300px] break-words">
+                      <p>{item.title}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="text-muted-foreground text-sm line-clamp-2 hover:cursor-help">{item.description}</p>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[300px] break-words">
+                      <p>{item.description}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </Card>
           )

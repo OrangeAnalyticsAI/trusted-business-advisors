@@ -193,17 +193,51 @@ export const ContentItem = ({
           )}
         </div>
         <div className="p-4 flex-grow">
-          <h3 className="font-semibold mb-2">{title}</h3>
-          <p className="text-muted-foreground text-sm mb-2">{description}</p>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <h3 className="font-semibold mb-2 line-clamp-2 hover:cursor-help">{title}</h3>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[300px] break-words">
+                <p>{title}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <p className="text-muted-foreground text-sm mb-2 line-clamp-2 hover:cursor-help">{description}</p>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[300px] break-words">
+                <p>{description}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           
           {categories.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-3">
-              {categories.map((category) => (
-                <Badge key={category.id} variant="outline" className="text-xs">
-                  {category.name}
-                </Badge>
-              ))}
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex flex-wrap gap-1 mb-3 line-clamp-2 hover:cursor-help">
+                    {categories.map((category) => (
+                      <Badge key={category.id} variant="outline" className="text-xs">
+                        {category.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[300px]">
+                  <div className="flex flex-wrap gap-1">
+                    {categories.map((category) => (
+                      <Badge key={category.id} variant="outline" className="text-xs">
+                        {category.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
         </div>
         
