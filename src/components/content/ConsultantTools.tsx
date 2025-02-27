@@ -93,7 +93,7 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
     
     const { fileName, file, bucket } = existingFileInfo;
     
-    // Instead of trying to overwrite directly, use a modified filename to avoid collisions
+    // Use a modified filename to avoid collisions
     const uniqueFileName = generateUniqueFilename(fileName);
     
     console.log(`Uploading file with unique name: ${uniqueFileName} (original: ${fileName})`);
@@ -111,16 +111,41 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
       
       console.log("File uploaded successfully with unique name");
       
-      // After successful upload with the unique name, delete the old file
-      const { error: removeError } = await supabase.storage
+      // Get a list of all files with matching name to ensure we're removing the correct one
+      const { data: fileList, error: listError } = await supabase.storage
         .from(bucket)
-        .remove([fileName]);
+        .list('', {
+          search: fileName
+        });
       
-      if (removeError) {
-        console.error("Error removing original file (but new file was uploaded):", removeError);
+      if (listError) {
+        console.error("Error listing files for deletion:", listError);
         // Continue despite error, as we at least have the new file uploaded
       } else {
-        console.log("Original file removed successfully");
+        console.log("Files found for potential deletion:", fileList);
+        
+        // Find exact matches to delete
+        const exactMatches = fileList.filter(f => f.name === fileName);
+        
+        if (exactMatches.length > 0) {
+          // Delete all exact matches
+          const filesToRemove = exactMatches.map(f => f.name);
+          console.log("Attempting to delete these files:", filesToRemove);
+          
+          const { data: removeData, error: removeError } = await supabase.storage
+            .from(bucket)
+            .remove(filesToRemove);
+          
+          if (removeError) {
+            console.error("Error removing original file:", removeError);
+            // Continue despite error, as we at least have the new file uploaded
+          } else {
+            console.log("Original file removal result:", removeData);
+            console.log("Original file removed successfully");
+          }
+        } else {
+          console.log("No exact matches found for deletion");
+        }
       }
       
       return uniqueFileName;
