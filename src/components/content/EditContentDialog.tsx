@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { supabase, generateUniqueFilename, THUMBNAILS_BUCKET } from "@/integrations/supabase/client";
 import { FileImage, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 
 interface Category {
   id: string;
@@ -27,6 +28,7 @@ interface EditContentDialogProps {
   initialTitle: string;
   initialDescription: string;
   initialThumbnailUrl?: string;
+  initialIsPremium?: boolean;
   onUpdate: () => void;
 }
 
@@ -37,6 +39,7 @@ export function EditContentDialog({
   initialTitle,
   initialDescription,
   initialThumbnailUrl,
+  initialIsPremium = false,
   onUpdate,
 }: EditContentDialogProps) {
   const [title, setTitle] = useState(initialTitle);
@@ -44,6 +47,7 @@ export function EditContentDialog({
   const [isUpdating, setIsUpdating] = useState(false);
   const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [isPremium, setIsPremium] = useState(initialIsPremium);
   
   // Thumbnail state
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
@@ -88,8 +92,9 @@ export function EditContentDialog({
       setDescription(initialDescription);
       setThumbnailPreview(initialThumbnailUrl || null);
       setThumbnailFile(null);
+      setIsPremium(initialIsPremium);
     }
-  }, [open, contentId, initialTitle, initialDescription, initialThumbnailUrl]);
+  }, [open, contentId, initialTitle, initialDescription, initialThumbnailUrl, initialIsPremium]);
   
   const handleCategoryToggle = (categoryId: string) => {
     setSelectedCategories(prev =>
@@ -185,6 +190,7 @@ export function EditContentDialog({
           title,
           description,
           thumbnail_url: thumbnailUrl,
+          is_premium: isPremium,
           updated_at: new Date().toISOString(),
         })
         .eq('id', contentId);
@@ -280,6 +286,15 @@ export function EditContentDialog({
                 New thumbnail selected: {thumbnailFile.name}
               </div>
             )}
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="premium-mode"
+              checked={isPremium}
+              onCheckedChange={setIsPremium}
+            />
+            <Label htmlFor="premium-mode" className="cursor-pointer">Premium Content</Label>
           </div>
           
           <div className="space-y-2">

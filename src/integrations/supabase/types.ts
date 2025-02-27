@@ -36,6 +36,7 @@ export type Database = {
           description: string | null
           id: string
           is_external_url: boolean
+          is_premium: boolean
           original_filename: string | null
           thumbnail_url: string | null
           title: string
@@ -49,6 +50,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_external_url?: boolean
+          is_premium?: boolean
           original_filename?: string | null
           thumbnail_url?: string | null
           title: string
@@ -62,6 +64,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_external_url?: boolean
+          is_premium?: boolean
           original_filename?: string | null
           thumbnail_url?: string | null
           title?: string

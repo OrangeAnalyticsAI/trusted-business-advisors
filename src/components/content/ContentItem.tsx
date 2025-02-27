@@ -1,6 +1,6 @@
 
 import { Card } from "@/components/ui/card";
-import { FileText, Video, Table, Presentation, FileType, Trash2, Download, Tag, Pencil } from "lucide-react";
+import { FileText, Video, Table, Presentation, FileType, Trash2, Download, Tag, Pencil, Gift, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ interface ContentItemProps {
   thumbnail_url?: string;
   original_filename?: string;
   isConsultant?: boolean;
+  is_premium?: boolean;
   onDelete?: () => void;
 }
 
@@ -35,6 +36,7 @@ export const ContentItem = ({
   thumbnail_url,
   original_filename,
   isConsultant = false,
+  is_premium = false,
   onDelete,
 }: ContentItemProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -191,18 +193,37 @@ export const ContentItem = ({
           ) : (
             <Icon className="h-12 w-12 text-muted-foreground" />
           )}
+          {/* Premium badge in top right corner */}
+          {is_premium ? (
+            <div className="absolute top-2 right-2 bg-amber-500 text-white rounded-full p-1">
+              <Crown className="h-4 w-4" />
+            </div>
+          ) : (
+            <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-1">
+              <Gift className="h-4 w-4" />
+            </div>
+          )}
         </div>
         <div className="p-4 flex-grow">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <h3 className="font-semibold mb-2 line-clamp-2 hover:cursor-help">{title}</h3>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-[300px] break-words">
-                <p>{title}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <div className="flex items-center gap-2 mb-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <h3 className="font-semibold line-clamp-2 hover:cursor-help">{title}</h3>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[300px] break-words">
+                  <p>{title}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            {is_premium && (
+              <Badge className="bg-amber-500 hover:bg-amber-600">Premium</Badge>
+            )}
+            {!is_premium && (
+              <Badge className="bg-green-500 hover:bg-green-600">Free</Badge>
+            )}
+          </div>
           
           <TooltipProvider>
             <Tooltip>
@@ -316,6 +337,7 @@ export const ContentItem = ({
         initialTitle={title}
         initialDescription={description}
         initialThumbnailUrl={thumbnail_url}
+        initialIsPremium={is_premium}
         onUpdate={() => {
           if (onDelete) {
             onDelete();

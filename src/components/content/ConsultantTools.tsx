@@ -1,6 +1,7 @@
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, Upload, Link } from "lucide-react";
+import { Plus, Loader2, Upload, Link, Crown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { 
   SUPABASE_URL, 
   supabase, 
@@ -38,6 +40,7 @@ interface NewContent {
   thumbnail: File | null;
   categories: string[];
   uploadType: 'file' | 'url';
+  isPremium: boolean;
 }
 
 interface ConsultantToolsProps {
@@ -58,7 +61,8 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
     contentUrl: "",
     thumbnail: null,
     categories: [],
-    uploadType: 'file'
+    uploadType: 'file',
+    isPremium: false
   });
 
   // Store file info when duplicate is detected
@@ -178,19 +182,23 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
         return;
       }
       
-      // Update the content record
-      const updateSuccess = await replaceContentFile(
-        fileName,
-        contentUrl as string,
-        thumbnailUrl,
-        newContent.content_type,
-        newContent.title,
-        newContent.description || null,
-        user.id
-      );
+      // Update the content record with the premium status
+      const { error: updateError } = await supabase
+        .from('content')
+        .update({
+          content_url: contentUrl,
+          thumbnail_url: thumbnailUrl,
+          content_type: newContent.content_type,
+          title: newContent.title,
+          description: newContent.description || null,
+          is_premium: newContent.isPremium,
+          updated_at: new Date().toISOString(),
+          is_external_url: false
+        })
+        .eq('id', existingContent.id);
       
-      if (!updateSuccess) {
-        toast.error("Failed to update content metadata");
+      if (updateError) {
+        toast.error(`Failed to update content metadata: ${updateError.message}`);
         setLoadingContent(false);
         setFileExistsDialog(false);
         return;
@@ -297,6 +305,19 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
         return;
       }
       
+      // Also update the premium status
+      const { error: premiumUpdateError } = await supabase
+        .from('content')
+        .update({
+          is_premium: newContent.isPremium
+        })
+        .eq('id', existingUrlInfo.contentId);
+        
+      if (premiumUpdateError) {
+        console.error("Error updating premium status:", premiumUpdateError);
+        toast.error("Content updated but failed to update premium status");
+      }
+      
       toast.success("Content updated successfully");
       onContentAdded();
       
@@ -323,7 +344,8 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
       contentUrl: "",
       thumbnail: null,
       categories: [],
-      uploadType: 'file'
+      uploadType: 'file',
+      isPremium: false
     });
   };
 
@@ -457,7 +479,8 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
           thumbnail_url: thumbnailUrl,
           created_by: user.id,
           original_filename: fileName,
-          is_external_url: false
+          is_external_url: false,
+          is_premium: newContent.isPremium
         })
         .select()
         .single();
@@ -540,6 +563,21 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
       if (error) {
         toast.error(`Failed to add URL content: ${error.message}`);
         return;
+      }
+      
+      // Set the premium status
+      if (id) {
+        const { error: premiumUpdateError } = await supabase
+          .from('content')
+          .update({
+            is_premium: newContent.isPremium
+          })
+          .eq('id', id);
+          
+        if (premiumUpdateError) {
+          console.error("Error updating premium status:", premiumUpdateError);
+          toast.error("Content added but failed to update premium status");
+        }
       }
       
       toast.success("URL content added successfully");
@@ -685,6 +723,19 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
                     <option value="report">Report</option>
                   </select>
                 </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="premium-content"
+                    checked={newContent.isPremium}
+                    onCheckedChange={(checked) => setNewContent({...newContent, isPremium: checked})}
+                  />
+                  <Label htmlFor="premium-content" className="flex items-center gap-2 cursor-pointer">
+                    Premium Content
+                    <Crown className="h-4 w-4 text-amber-500" />
+                  </Label>
+                </div>
+                
                 <div className="space-y-2">
                   <Label>Categories</Label>
                   <div className="grid grid-cols-2 gap-2 border rounded-md p-3 max-h-40 overflow-y-auto">

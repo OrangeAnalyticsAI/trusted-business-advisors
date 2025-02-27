@@ -12,6 +12,7 @@ interface ContentItemData {
   updated_at: string;
   created_by: string;
   original_filename?: string;
+  is_premium?: boolean;
 }
 
 interface ContentItemsGridProps {
@@ -38,6 +39,7 @@ export const ContentItemsGrid = ({ items, title, isConsultant = false, onDelete 
             content_url={item.content_url}
             thumbnail_url={item.thumbnail_url}
             original_filename={item.original_filename}
+            is_premium={item.is_premium}
             isConsultant={isConsultant}
             onDelete={onDelete}
           />
