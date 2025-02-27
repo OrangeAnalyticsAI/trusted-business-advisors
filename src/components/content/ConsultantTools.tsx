@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
@@ -11,7 +12,11 @@ import {
   supabase, 
   storage, 
   fileExistsInContent,
-  replaceContentFile
+  replaceContentFile,
+  CONTENT_FILES_BUCKET,
+  THUMBNAILS_BUCKET,
+  uploadFileToStorage,
+  removeFileFromStorage
 } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
@@ -63,131 +68,59 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
         return;
       }
 
-      // First, get the existing record by original filename
       const fileName = existingFileInfo.file.name;
-      const { data: existingContent, error: fetchError } = await supabase
-        .from('content')
-        .select('id, content_url, thumbnail_url')
-        .eq('original_filename', fileName)
-        .limit(1)
-        .single();
       
-      if (fetchError) {
-        console.error("Error fetching existing content:", fetchError);
-        throw new Error(`Failed to fetch existing content: ${fetchError.message}`);
+      // Upload the content file, replacing the existing one
+      const { url: contentUrl, error: contentUploadError } = await uploadFileToStorage(
+        CONTENT_FILES_BUCKET, 
+        fileName, 
+        existingFileInfo.file,
+        true // Enable upsert to replace existing file
+      );
+      
+      if (contentUploadError) {
+        toast.error(`Failed to upload content: ${contentUploadError.message}`);
+        setLoadingContent(false);
+        setFileExistsDialog(false);
+        return;
       }
       
-      // Extract the file paths from the content_url and thumbnail_url
-      const contentFilePath = existingContent.content_url 
-        ? new URL(existingContent.content_url).pathname.split('/').pop() 
-        : null;
-        
-      const thumbnailFilePath = existingContent.thumbnail_url 
-        ? new URL(existingContent.thumbnail_url).pathname.split('/').pop() 
-        : null;
-
-      // Upload the new content file with the same filename in storage
-      const { data: uploadData, error: uploadError } = await storage
-        .from('content_files')
-        .upload(fileName, existingFileInfo.file, { upsert: true });
-        
-      if (uploadError) {
-        console.error("Error uploading new file:", uploadError);
-
-        // If the error is not that the file already exists, throw an error
-        if (uploadError.message !== 'The resource already exists') {
-          throw new Error(`Upload failed: ${uploadError.message}`);
-        }
-        
-        // If it's because the file exists, delete it first and then upload
-        const { data: removeData, error: removeError } = await storage
-          .from('content_files')
-          .remove([fileName]);
-          
-        if (removeError) {
-          console.error("Error removing existing file:", removeError);
-          throw new Error(`Failed to remove existing file: ${removeError.message}`);
-        }
-        
-        // Try upload again after deletion
-        const { data: retryData, error: retryError } = await storage
-          .from('content_files')
-          .upload(fileName, existingFileInfo.file, { upsert: false });
-          
-        if (retryError) {
-          console.error("Error re-uploading file:", retryError);
-          throw new Error(`Re-upload failed: ${retryError.message}`);
-        }
-      }
-      
-      // Get the public URL for content
-      const { data: { publicUrl: contentUrl } } = storage
-        .from('content_files')
-        .getPublicUrl(fileName);
-        
       // Handle thumbnail if it exists
       let thumbnailUrl = null;
       if (newContent.thumbnail) {
         const thumbnailName = newContent.thumbnail.name;
         
-        try {
-          // Delete existing thumbnail if it exists
-          if (thumbnailFilePath) {
-            await storage
-              .from('thumbnails')
-              .remove([thumbnailFilePath]);
-          }
-          
-          // Upload new thumbnail
-          const { data: thumbData, error: thumbError } = await storage
-            .from('thumbnails')
-            .upload(thumbnailName, newContent.thumbnail, { upsert: true });
-            
-          if (thumbError && thumbError.message === 'The resource already exists') {
-            // Remove and retry if thumbnail exists
-            await storage
-              .from('thumbnails')
-              .remove([thumbnailName]);
-              
-            await storage
-              .from('thumbnails')
-              .upload(thumbnailName, newContent.thumbnail, { upsert: false });
-          } else if (thumbError) {
-            console.error("Thumbnail upload error:", thumbError);
-            // Continue without thumbnail
-          }
-          
-          // Get thumbnail URL
-          const { data: { publicUrl: thumbPublicUrl } } = storage
-            .from('thumbnails')
-            .getPublicUrl(thumbnailName);
-            
-          thumbnailUrl = thumbPublicUrl;
-        } catch (thumbError) {
-          console.warn("Thumbnail handling error:", thumbError);
-          // Continue without thumbnail
-        }
-      } else if (existingContent.thumbnail_url) {
-        // Keep the existing thumbnail if no new one
-        thumbnailUrl = existingContent.thumbnail_url;
-      }
-
-      // Update the content record
-      const { error: updateError } = await supabase
-        .from('content')
-        .update({
-          content_url: contentUrl,
-          thumbnail_url: thumbnailUrl,
-          content_type: newContent.content_type,
-          title: newContent.title,
-          description: newContent.description || null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existingContent.id);
+        const { url: thumbUrl, error: thumbUploadError } = await uploadFileToStorage(
+          THUMBNAILS_BUCKET, 
+          thumbnailName, 
+          newContent.thumbnail,
+          true // Enable upsert to replace existing thumbnail
+        );
         
-      if (updateError) {
-        console.error("Content update error:", updateError);
-        throw new Error(`Failed to update content: ${updateError.message}`);
+        if (thumbUploadError) {
+          console.warn("Thumbnail upload error:", thumbUploadError);
+          // Continue without thumbnail
+        } else {
+          thumbnailUrl = thumbUrl;
+        }
+      }
+      
+      // Update the content record
+      const updateSuccess = await replaceContentFile(
+        fileName,
+        contentUrl as string,
+        thumbnailUrl,
+        newContent.content_type,
+        newContent.title,
+        newContent.description || null,
+        user.id
+      );
+      
+      if (!updateSuccess) {
+        toast.error("Failed to update content metadata");
+        setLoadingContent(false);
+        setFileExistsDialog(false);
+        return;
       }
       
       toast.success("Content replaced successfully");
@@ -266,80 +199,34 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
       // Upload content file with original filename
       const fileName = newContent.contentFile.name;
       
-      let contentUrl;
-      try {
-        const { data: uploadData, error: uploadError } = await storage
-          .from('content_files')
-          .upload(fileName, newContent.contentFile, { upsert: false });
-          
-        if (uploadError) {
-          if (uploadError.message === 'The resource already exists') {
-            // If it exists, remove it first then re-upload
-            const { error: removeError } = await storage
-              .from('content_files')
-              .remove([fileName]);
-              
-            if (removeError) {
-              throw new Error(`Failed to remove existing file: ${removeError.message}`);
-            }
-            
-            // Re-upload
-            const { error: retryError } = await storage
-              .from('content_files')
-              .upload(fileName, newContent.contentFile, { upsert: false });
-              
-            if (retryError) {
-              throw new Error(`Re-upload failed: ${retryError.message}`);
-            }
-          } else {
-            throw new Error(`Upload failed: ${uploadError.message}`);
-          }
-        }
-        
-        // Get public URL
-        const { data: { publicUrl } } = storage
-          .from('content_files')
-          .getPublicUrl(fileName);
-          
-        contentUrl = publicUrl;
-      } catch (error) {
-        console.error("Content file upload error:", error);
-        throw error;
+      // Upload the content file
+      const { url: contentUrl, error: contentUploadError } = await uploadFileToStorage(
+        CONTENT_FILES_BUCKET,
+        fileName,
+        newContent.contentFile
+      );
+      
+      if (contentUploadError) {
+        toast.error(`Failed to upload content: ${contentUploadError.message}`);
+        return;
       }
       
       // Handle thumbnail if it exists
       let thumbnailUrl = null;
       if (newContent.thumbnail) {
-        try {
-          const thumbnailName = newContent.thumbnail.name;
-          
-          // Check if thumbnail exists and handle similarly
-          const { data: thumbData, error: thumbError } = await storage
-            .from('thumbnails')
-            .upload(thumbnailName, newContent.thumbnail, { upsert: false });
-            
-          if (thumbError && thumbError.message === 'The resource already exists') {
-            // Remove and retry if thumbnail exists
-            await storage
-              .from('thumbnails')
-              .remove([thumbnailName]);
-              
-            await storage
-              .from('thumbnails')
-              .upload(thumbnailName, newContent.thumbnail, { upsert: false });
-          } else if (thumbError) {
-            throw new Error(`Thumbnail upload failed: ${thumbError.message}`);
-          }
-          
-          // Get thumbnail URL
-          const { data: { publicUrl: thumbUrl } } = storage
-            .from('thumbnails')
-            .getPublicUrl(thumbnailName);
-            
-          thumbnailUrl = thumbUrl;
-        } catch (thumbError) {
-          console.warn("Thumbnail upload error:", thumbError);
+        const thumbnailName = newContent.thumbnail.name;
+        
+        const { url: thumbUrl, error: thumbUploadError } = await uploadFileToStorage(
+          THUMBNAILS_BUCKET, 
+          thumbnailName, 
+          newContent.thumbnail
+        );
+        
+        if (thumbUploadError) {
+          console.warn("Thumbnail upload error:", thumbUploadError);
           // Continue without thumbnail
+        } else {
+          thumbnailUrl = thumbUrl;
         }
       }
       
@@ -360,7 +247,8 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
         
       if (contentError) {
         console.error("Content database insertion error:", contentError);
-        throw new Error(`Failed to save content metadata: ${contentError.message}`);
+        toast.error(`Failed to save content metadata: ${contentError.message}`);
+        return;
       }
       
       toast.success("Content added successfully");

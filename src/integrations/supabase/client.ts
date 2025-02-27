@@ -11,6 +11,10 @@ export const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ey
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
+// Export buckets for direct access
+export const CONTENT_FILES_BUCKET = 'content_files';
+export const THUMBNAILS_BUCKET = 'thumbnails';
+
 // Export storage for direct access
 export const storage = supabase.storage;
 
@@ -38,6 +42,75 @@ export const fileExistsInContent = async (originalFilename: string): Promise<boo
   }
   
   return data && data.length > 0;
+};
+
+// Helper to remove a file from storage
+export const removeFileFromStorage = async (
+  bucketName: string,
+  fileName: string
+): Promise<boolean> => {
+  try {
+    const { error } = await storage
+      .from(bucketName)
+      .remove([fileName]);
+      
+    if (error) {
+      console.error(`Error removing file from ${bucketName}:`, error);
+      return false;
+    }
+    
+    return true;
+  } catch (err) {
+    console.error(`Exception removing file from ${bucketName}:`, err);
+    return false;
+  }
+};
+
+// Helper to upload a file to storage with overwrite capability
+export const uploadFileToStorage = async (
+  bucketName: string,
+  fileName: string,
+  file: File,
+  upsert: boolean = false
+): Promise<{ url: string | null; error: Error | null }> => {
+  try {
+    // Attempt to upload the file
+    const { error: uploadError } = await storage
+      .from(bucketName)
+      .upload(fileName, file, { upsert });
+      
+    // If there's an error and it's not because the file exists, return the error
+    if (uploadError && uploadError.message !== 'The resource already exists') {
+      return { url: null, error: new Error(`Upload failed: ${uploadError.message}`) };
+    }
+    
+    // If the file exists and upsert is false, try to delete it and re-upload
+    if (uploadError && uploadError.message === 'The resource already exists' && !upsert) {
+      const removed = await removeFileFromStorage(bucketName, fileName);
+      
+      if (!removed) {
+        return { url: null, error: new Error(`Failed to remove existing file for replacement`) };
+      }
+      
+      // Try upload again after deletion
+      const { error: retryError } = await storage
+        .from(bucketName)
+        .upload(fileName, file, { upsert: false });
+        
+      if (retryError) {
+        return { url: null, error: new Error(`Re-upload failed: ${retryError.message}`) };
+      }
+    }
+    
+    // Get the public URL
+    const { data: { publicUrl } } = storage
+      .from(bucketName)
+      .getPublicUrl(fileName);
+      
+    return { url: publicUrl, error: null };
+  } catch (err) {
+    return { url: null, error: err instanceof Error ? err : new Error('Unknown error during upload') };
+  }
 };
 
 // Helper to replace a file in content table
