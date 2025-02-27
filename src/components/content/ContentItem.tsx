@@ -2,6 +2,7 @@
 import { Card } from "@/components/ui/card";
 import { FileText, Video, Table, Presentation, FileType } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface ContentItemProps {
   id: string;
@@ -43,37 +44,45 @@ export const ContentItem = ({
     if (!content_url) return;
     
     if (original_filename) {
-      // Create a temporary anchor element
-      const link = document.createElement('a');
-      link.href = content_url;
+      // Use XMLHttpRequest with responseType 'blob' to force download with proper filename
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', content_url, true);
+      xhr.responseType = 'blob';
       
-      // Instead of just setting the download attribute, we need to actually
-      // fetch the file and use the Blob API to trigger the download with the proper name
-      fetch(content_url)
-        .then(response => response.blob())
-        .then(blob => {
-          // Create a blob URL for the file
-          const blobUrl = URL.createObjectURL(blob);
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          // Create blob link to download
+          const blob = new Blob([xhr.response], { type: xhr.getResponseHeader('content-type') });
+          const url = window.URL.createObjectURL(blob);
           
-          // Update the link to use the blob URL
-          link.href = blobUrl;
-          
-          // Set the download attribute with the original filename
+          // Create temp link
+          const link = document.createElement('a');
+          link.href = url;
           link.download = original_filename;
           
-          // Append to the body, click, then remove
+          // Append to html
           document.body.appendChild(link);
+          
+          // Force download
           link.click();
           
-          // Clean up
-          document.body.removeChild(link);
-          URL.revokeObjectURL(blobUrl);
-        })
-        .catch(error => {
-          console.error('Error downloading file:', error);
-          // Fallback to original behavior
+          // Clean up and remove the link
+          link.parentNode?.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          
+          toast.success(`Downloading ${original_filename}`);
+        } else {
+          toast.error("Download failed");
           window.open(content_url, '_blank');
-        });
+        }
+      };
+      
+      xhr.onerror = function() {
+        toast.error("Download failed");
+        window.open(content_url, '_blank');
+      };
+      
+      xhr.send();
     } else {
       // Fall back to normal behavior if no original filename
       window.open(content_url, '_blank');
@@ -99,11 +108,11 @@ export const ContentItem = ({
         {content_url && (
           <div className="mt-4">
             <Button 
-              variant="link" 
-              className="p-0 h-auto text-primary text-sm hover:underline"
+              variant="outline" 
+              className="text-primary text-sm gap-2"
               onClick={handleViewContent}
             >
-              View Content {original_filename ? `(${original_filename})` : ''}
+              {original_filename ? 'Download' : 'View'} {original_filename ? '(' + original_filename + ')' : ''}
             </Button>
           </div>
         )}
