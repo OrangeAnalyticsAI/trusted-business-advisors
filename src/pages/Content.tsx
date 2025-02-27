@@ -62,9 +62,12 @@ export default function Content() {
   useEffect(() => {
     const checkUser = async () => {
       try {
+        console.log("Starting to check user session...");
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
+          console.log("User is logged in, user ID:", session.user.id);
+          
           // Fetch user profile
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
@@ -76,12 +79,20 @@ export default function Content() {
             console.error("Error fetching profile:", profileError);
             toast.error("Error fetching user profile");
           } else if (profileData) {
+            console.log("Profile data retrieved:", profileData);
+            console.log("User type:", profileData.user_type);
             setUserProfile(profileData);
-            setIsConsultant(profileData.user_type === 'consultant');
+            const isUserConsultant = profileData.user_type === 'consultant';
+            console.log("Is user a consultant?", isUserConsultant);
+            setIsConsultant(isUserConsultant);
+          } else {
+            console.log("No profile data found for user");
           }
           
           // Load content
           await fetchContent();
+        } else {
+          console.log("No active session found");
         }
       } catch (error) {
         console.error("Session or profile check error:", error);
@@ -199,6 +210,11 @@ export default function Content() {
         return FileText;
     }
   };
+  
+  // Debug isConsultant changes
+  useEffect(() => {
+    console.log("isConsultant state changed:", isConsultant);
+  }, [isConsultant]);
   
   // Handle category change and refetch content
   useEffect(() => {
@@ -383,6 +399,14 @@ export default function Content() {
               </div>
             ) : (
               <>
+                {/* Debugging info for consultant status - temporary */}
+                <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 rounded p-3 mb-6">
+                  <h3 className="font-medium">Debug Information</h3>
+                  <p>User is logged in: {userProfile ? "Yes" : "No"}</p>
+                  <p>User type: {userProfile?.user_type || "Unknown"}</p>
+                  <p>Is consultant (state): {isConsultant ? "Yes" : "No"}</p>
+                </div>
+              
                 {/* Dynamic content from database */}
                 {contentItems.length > 0 && (
                   <section className="mb-12">
