@@ -195,7 +195,7 @@ export const ContentItem = ({
   };
 
   return (
-    <Card key={id} className="overflow-hidden">
+    <Card key={id} className="overflow-hidden flex flex-col">
       <div className="aspect-video bg-muted relative flex items-center justify-center">
         {thumbnail_url ? (
           <img 
@@ -207,7 +207,7 @@ export const ContentItem = ({
           <Icon className="h-12 w-12 text-muted-foreground" />
         )}
       </div>
-      <div className="p-4">
+      <div className="p-4 flex-grow">
         <h3 className="font-semibold mb-2">{title}</h3>
         <p className="text-muted-foreground text-sm mb-2">{description}</p>
         
@@ -220,9 +220,11 @@ export const ContentItem = ({
             ))}
           </div>
         )}
-        
-        {content_url && (
-          <div className="mt-4 flex items-center justify-between">
+      </div>
+      
+      {content_url && (
+        <div className="p-4 pt-0 mt-auto border-t border-border">
+          <div className="flex items-center justify-between gap-2">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -262,8 +264,8 @@ export const ContentItem = ({
               </TooltipProvider>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </Card>
   );
 };
