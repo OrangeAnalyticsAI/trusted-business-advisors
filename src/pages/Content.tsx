@@ -1,16 +1,14 @@
-
 import { Navbar } from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { FileText, Video, Table, Search, Upload, Loader2 } from "lucide-react";
+import { FileText, Video, Table, Search, Upload, Loader2, Image } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-// Type definition for content items
 interface ContentItem {
   id: string;
   title: string;
@@ -23,7 +21,6 @@ interface ContentItem {
   created_by: string;
 }
 
-// Type definition for user profile
 interface UserProfile {
   id: string;
   user_type: 'client' | 'consultant';
@@ -41,12 +38,12 @@ export default function Content() {
   const [newContent, setNewContent] = useState({
     title: "",
     description: "",
-    content_type: "video", // Default type
-    content_url: ""
+    content_type: "video",
+    contentFile: null as File | null,
+    thumbnail: null as File | null
   });
   const [dialogOpen, setDialogOpen] = useState(false);
   
-  // Categories for content filtering
   const categories = [
     { id: "all", name: "All Content" },
     { id: "videos", name: "Videos" },
@@ -58,7 +55,6 @@ export default function Content() {
   
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  // Check user profile and load initial data
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -68,7 +64,6 @@ export default function Content() {
         if (session?.user) {
           console.log("User is logged in, user ID:", session.user.id);
           
-          // Fetch user profile
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
@@ -89,7 +84,6 @@ export default function Content() {
             console.log("No profile data found for user");
           }
           
-          // Load content
           await fetchContent();
         } else {
           console.log("No active session found");
@@ -105,26 +99,21 @@ export default function Content() {
     checkUser();
   }, []);
   
-  // Fetch content from database
   const fetchContent = async () => {
     try {
       setLoadingContent(true);
       
-      // Filter by category if not "all"
       let query = supabase.from('content').select('*');
       
       if (selectedCategory !== "all") {
-        // Convert category id to content_type format
-        const contentType = selectedCategory.slice(0, -1); // Remove 's' from end (videos -> video)
+        const contentType = selectedCategory.slice(0, -1);
         query = query.eq('content_type', contentType);
       }
       
-      // Apply search filter if present
       if (searchQuery) {
         query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
       }
       
-      // Order by most recent
       query = query.order('created_at', { ascending: false });
       
       const { data, error } = await query;
@@ -144,51 +133,58 @@ export default function Content() {
     }
   };
   
-  // Handle content form submission
   const handleSubmitContent = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newContent.title || !newContent.content_type) {
-      toast.error("Title and content type are required");
+    if (!newContent.title || !newContent.content_type || !newContent.contentFile) {
+      toast.error("Title, content type, and file are required");
       return;
     }
     
     try {
       setLoadingContent(true);
       
-      // Get the current authenticated user
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
         toast.error("You must be logged in to add content");
         return;
       }
-      
-      const { data, error } = await supabase
-        .from('content')
-        .insert({
-          title: newContent.title,
-          description: newContent.description,
-          content_type: newContent.content_type,
-          content_url: newContent.content_url,
-          created_by: user.id,
-        })
-        .select();
-        
-      if (error) {
-        console.error("Error adding content:", error);
-        toast.error("Failed to add content");
-      } else {
-        toast.success("Content added successfully");
-        setNewContent({
-          title: "",
-          description: "",
-          content_type: "video",
-          content_url: ""
-        });
-        setDialogOpen(false);
-        await fetchContent(); // Refresh content list
+
+      const formData = new FormData();
+      formData.append('contentFile', newContent.contentFile);
+      if (newContent.thumbnail) {
+        formData.append('thumbnail', newContent.thumbnail);
       }
+      formData.append('title', newContent.title);
+      formData.append('description', newContent.description || '');
+      formData.append('contentType', newContent.content_type);
+
+      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/upload-content`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'x-user-id': user.id
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to upload content');
+      }
+
+      toast.success("Content added successfully");
+      setNewContent({
+        title: "",
+        description: "",
+        content_type: "video",
+        contentFile: null,
+        thumbnail: null
+      });
+      setDialogOpen(false);
+      await fetchContent();
     } catch (error) {
       console.error("Content submission error:", error);
       toast.error("Error adding content");
@@ -197,7 +193,6 @@ export default function Content() {
     }
   };
   
-  // Get content icon based on type
   const getContentIcon = (type: string) => {
     switch (type) {
       case 'video':
@@ -211,12 +206,10 @@ export default function Content() {
     }
   };
   
-  // Debug isConsultant changes
   useEffect(() => {
     console.log("isConsultant state changed:", isConsultant);
   }, [isConsultant]);
   
-  // Handle category change and refetch content
   useEffect(() => {
     if (!loading) {
       fetchContent();
@@ -246,10 +239,8 @@ export default function Content() {
 
       <div className="container py-16">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Left Sidebar for Content Navigation - 1/4 width on desktop */}
           <div className="lg:col-span-1">
             <div className="sticky top-24 space-y-6">
-              {/* Search Box */}
               <Card className="p-4">
                 <div className="space-y-3">
                   <Label htmlFor="content-search" className="text-sm font-semibold">Search Content</Label>
@@ -267,7 +258,6 @@ export default function Content() {
                 </div>
               </Card>
               
-              {/* Categories */}
               <Card className="p-4">
                 <h3 className="text-sm font-semibold mb-3">Categories</h3>
                 <div className="space-y-1">
@@ -287,7 +277,6 @@ export default function Content() {
                 </div>
               </Card>
               
-              {/* Popular Resources */}
               <Card className="p-4">
                 <h3 className="text-sm font-semibold mb-3">Popular Resources</h3>
                 <div className="space-y-3">
@@ -307,7 +296,6 @@ export default function Content() {
                 </div>
               </Card>
               
-              {/* Load Content Button - Only shown to consultants */}
               {isConsultant && (
                 <Card className="p-4">
                   <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -361,12 +349,21 @@ export default function Content() {
                             </select>
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="content-url">Content URL (optional)</Label>
+                            <Label htmlFor="content-file">Content File</Label>
                             <Input
-                              id="content-url"
-                              value={newContent.content_url}
-                              onChange={(e) => setNewContent({...newContent, content_url: e.target.value})}
-                              placeholder="https://example.com/your-content"
+                              id="content-file"
+                              type="file"
+                              onChange={(e) => setNewContent({...newContent, contentFile: e.target.files?.[0] || null})}
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="thumbnail">Thumbnail Image (optional)</Label>
+                            <Input
+                              id="thumbnail"
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => setNewContent({...newContent, thumbnail: e.target.files?.[0] || null})}
                             />
                           </div>
                         </div>
@@ -390,16 +387,13 @@ export default function Content() {
             </div>
           </div>
           
-          {/* Main Content Area - 3/4 width on desktop */}
           <div className="lg:col-span-3">
-            {/* Loading state */}
             {loading ? (
               <div className="h-64 flex items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : (
               <>
-                {/* Debugging info for consultant status - temporary */}
                 <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 rounded p-3 mb-6">
                   <h3 className="font-medium">Debug Information</h3>
                   <p>User is logged in: {userProfile ? "Yes" : "No"}</p>
@@ -407,7 +401,6 @@ export default function Content() {
                   <p>Is consultant (state): {isConsultant ? "Yes" : "No"}</p>
                 </div>
               
-                {/* Dynamic content from database */}
                 {contentItems.length > 0 && (
                   <section className="mb-12">
                     <h2 className="text-2xl font-semibold mb-6">Recent Uploads</h2>
@@ -450,7 +443,6 @@ export default function Content() {
                   </section>
                 )}
 
-                {/* Add fallback if no content yet */}
                 {!loading && contentItems.length === 0 && (
                   <div className="bg-muted/30 rounded-lg p-8 text-center my-8">
                     <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
@@ -471,7 +463,6 @@ export default function Content() {
                   </div>
                 )}
 
-                {/* Default/Example Content Sections */}
                 <section className="mb-12">
                   <h2 className="text-2xl font-semibold mb-6">Expert Video Resources</h2>
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -489,7 +480,6 @@ export default function Content() {
                   </div>
                 </section>
 
-                {/* Documents Section */}
                 <section className="mb-12">
                   <h2 className="text-2xl font-semibold mb-6">Professional Documents</h2>
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -507,7 +497,6 @@ export default function Content() {
                   </div>
                 </section>
 
-                {/* Spreadsheets Section */}
                 <section>
                   <h2 className="text-2xl font-semibold mb-6">Spreadsheet Templates</h2>
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
