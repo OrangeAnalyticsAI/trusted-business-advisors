@@ -39,6 +39,7 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
     fileName: string;
     fileExt: string;
     file: File;
+    bucket: string;
   } | null>(null);
 
   const checkFileExistsAndUpload = async (file: File, bucketName: string) => {
@@ -66,7 +67,8 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
       setExistingFileInfo({
         fileName,
         fileExt,
-        file
+        file,
+        bucket: bucketName
       });
       setFileExistsDialog(true);
       return { exists: true, fileName: null };
@@ -89,39 +91,103 @@ export const ConsultantTools = ({ onContentAdded }: ConsultantToolsProps) => {
   const uploadFileWithOverwrite = async () => {
     if (!existingFileInfo) return null;
     
-    const { fileName, file } = existingFileInfo;
-    const bucketName = file === newContent.contentFile ? 'content_files' : 'thumbnails';
+    const { fileName, file, bucket } = existingFileInfo;
     
-    console.log(`Overwriting file: ${fileName} in bucket ${bucketName}`);
+    console.log(`Replacing file: ${fileName} in bucket ${bucket}`);
     
-    // Upload with upsert: true to overwrite
-    const { data, error: uploadError } = await supabase.storage
-      .from(bucketName)
-      .upload(fileName, file, { upsert: true });
-    
-    if (uploadError) {
-      console.error("Upload error during overwrite:", uploadError);
-      throw new Error(`Storage overwrite failed: ${uploadError.message}`);
+    try {
+      // First, remove the existing file
+      const { error: removeError } = await supabase.storage
+        .from(bucket)
+        .remove([fileName]);
+      
+      if (removeError) {
+        console.error("Error removing existing file:", removeError);
+        throw new Error(`Failed to remove existing file: ${removeError.message}`);
+      }
+      
+      console.log("Existing file removed successfully");
+      
+      // Now upload the new file
+      const { data, error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file);
+      
+      if (uploadError) {
+        console.error("Upload error during replacement:", uploadError);
+        throw new Error(`Storage replacement failed: ${uploadError.message}`);
+      }
+      
+      console.log("File replaced successfully");
+      return fileName;
+    } catch (error) {
+      console.error("Error during file replacement:", error);
+      throw error;
     }
-    
-    console.log("File overwritten successfully");
-    setFileExistsDialog(false);
-    return fileName;
   };
   
   const handleReplaceFile = async () => {
     try {
       setLoadingContent(true);
       
-      // Upload content file with overwrite
-      const contentFileName = await uploadFileWithOverwrite();
-      
-      if (contentFileName) {
+      // If there's a content file to replace
+      let contentFileName = null;
+      if (existingFileInfo?.file === newContent.contentFile) {
+        contentFileName = await uploadFileWithOverwrite();
+        setExistingFileInfo(null);
+        setFileExistsDialog(false);
+        
+        // Check if we still need to handle the thumbnail
+        if (newContent.thumbnail) {
+          try {
+            const { exists, fileName } = await checkFileExistsAndUpload(newContent.thumbnail, 'thumbnails');
+            
+            if (exists) {
+              // We'll handle this in the next cycle
+              return;
+            }
+          } catch (error) {
+            console.error("Error checking thumbnail:", error);
+            // Continue without thumbnail
+          }
+        }
+        
+        // If we get here, we can finalize the content submission
+        await finalizeContentSubmission(contentFileName);
+      } 
+      // If there's a thumbnail to replace
+      else if (existingFileInfo?.file === newContent.thumbnail) {
+        await uploadFileWithOverwrite();
+        setExistingFileInfo(null);
+        setFileExistsDialog(false);
+        
+        // Now check and handle the content file
+        if (newContent.contentFile) {
+          try {
+            const { exists, fileName } = await checkFileExistsAndUpload(
+              newContent.contentFile, 
+              'content_files'
+            );
+            
+            if (exists) {
+              // We'll handle this in the next cycle
+              return;
+            }
+            
+            contentFileName = fileName;
+          } catch (error) {
+            console.error("Error uploading content file after thumbnail replacement:", error);
+            throw error;
+          }
+        }
+        
+        // If we get here, we can finalize
         await finalizeContentSubmission(contentFileName);
       }
     } catch (error) {
       console.error("Error replacing file:", error);
       toast.error(`Error replacing file: ${error.message || 'Unknown error'}`);
+      setFileExistsDialog(false);
     } finally {
       setLoadingContent(false);
     }
