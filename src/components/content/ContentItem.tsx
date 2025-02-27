@@ -1,12 +1,12 @@
-
 import { Card } from "@/components/ui/card";
-import { FileText, Video, Table, Presentation, FileType, Trash2, Download, Tag } from "lucide-react";
+import { FileText, Video, Table, Presentation, FileType, Trash2, Download, Tag, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { EditContentDialog } from "./EditContentDialog";
 
 interface Category {
   id: string;
@@ -39,6 +39,7 @@ export const ContentItem = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   
   useEffect(() => {
     const fetchCategories = async () => {
@@ -177,77 +178,112 @@ export const ContentItem = ({
   };
 
   return (
-    <Card key={id} className="overflow-hidden flex flex-col">
-      <div className="aspect-[5/3] bg-muted relative flex items-center justify-center overflow-hidden">
-        {thumbnail_url ? (
-          <img 
-            src={thumbnail_url} 
-            alt={title} 
-            className="w-full h-full object-cover absolute inset-0" 
-          />
-        ) : (
-          <Icon className="h-12 w-12 text-muted-foreground" />
-        )}
-      </div>
-      <div className="p-4 flex-grow">
-        <h3 className="font-semibold mb-2">{title}</h3>
-        <p className="text-muted-foreground text-sm mb-2">{description}</p>
+    <>
+      <Card key={id} className="overflow-hidden flex flex-col">
+        <div className="aspect-[5/3] bg-muted relative flex items-center justify-center overflow-hidden">
+          {thumbnail_url ? (
+            <img 
+              src={thumbnail_url} 
+              alt={title} 
+              className="w-full h-full object-cover absolute inset-0" 
+            />
+          ) : (
+            <Icon className="h-12 w-12 text-muted-foreground" />
+          )}
+        </div>
+        <div className="p-4 flex-grow">
+          <h3 className="font-semibold mb-2">{title}</h3>
+          <p className="text-muted-foreground text-sm mb-2">{description}</p>
+          
+          {categories.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-3">
+              {categories.map((category) => (
+                <Badge key={category.id} variant="outline" className="text-xs">
+                  {category.name}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
         
-        {categories.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {categories.map((category) => (
-              <Badge key={category.id} variant="outline" className="text-xs">
-                {category.name}
-              </Badge>
-            ))}
-          </div>
-        )}
-      </div>
-      
-      {content_url && (
-        <div className="p-4 pt-0 mt-auto">
-          <div className="flex items-center justify-between gap-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    className="bg-primary/10 border-primary/20 hover:bg-primary/20 hover:text-primary transition-all duration-200"
-                    onClick={handleViewContent}
-                  >
-                    <Download className="h-4 w-4 text-primary" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{original_filename ? `Download ${original_filename}` : 'View content'}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            {isConsultant && (
+        {content_url && (
+          <div className="p-4 pt-0 mt-auto">
+            <div className="flex items-center justify-between gap-2">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
+                    <Button 
+                      variant="outline" 
                       size="icon"
-                      className="bg-destructive/10 border-destructive/20 hover:bg-destructive/20 hover:text-destructive transition-all duration-200"
-                      onClick={handleDelete}
-                      disabled={isDeleting}
+                      className="bg-primary/10 border-primary/20 hover:bg-primary/20 hover:text-primary transition-all duration-200"
+                      onClick={handleViewContent}
                     >
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                      <Download className="h-4 w-4 text-primary" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Delete content</p>
+                    <p>{original_filename ? `Download ${original_filename}` : 'View content'}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            )}
+              
+              {isConsultant && (
+                <div className="flex gap-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20 hover:text-blue-500 transition-all duration-200"
+                          onClick={() => setEditDialogOpen(true)}
+                        >
+                          <Pencil className="h-4 w-4 text-blue-500" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Edit content</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="bg-destructive/10 border-destructive/20 hover:bg-destructive/20 hover:text-destructive transition-all duration-200"
+                          onClick={handleDelete}
+                          disabled={isDeleting}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Delete content</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
-    </Card>
+        )}
+      </Card>
+      
+      <EditContentDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        contentId={id}
+        initialTitle={title}
+        initialDescription={description}
+        onUpdate={() => {
+          if (onDelete) {
+            onDelete();
+          }
+        }}
+      />
+    </>
   );
 };
