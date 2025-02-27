@@ -144,7 +144,7 @@ export const ContentCategories = ({
             </div>
           )}
           
-          <div className={`flex flex-wrap gap-1 ${expanded ? '' : 'max-h-16 overflow-hidden'}`}>
+          <div className="flex flex-wrap gap-1">
             {metaCategories.map((category) => (
               <Badge 
                 key={category.id} 
