@@ -216,7 +216,7 @@ export const ContentItem = ({
           </TooltipProvider>
           
           {categories.length > 0 && (
-            <div className="h-[44px] overflow-hidden">
+            <div className="h-[50px] overflow-hidden">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
